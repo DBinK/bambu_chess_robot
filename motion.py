@@ -1,4 +1,5 @@
 from bambu_connect import BambuClient
+
 from config import hostname, access_code, serial
 
 bambu_client = BambuClient(hostname, access_code, serial)
@@ -10,6 +11,9 @@ position_z  = 10
 
 # 默认电机速度
 MOTOR_SPEED = 12000
+PX_LIMIT = [0, 280]
+PY_LIMIT = [10, 240]
+PZ_LIMIT = [10, 200]
 
 def send_gcode(gcode_command):
     # 发送 G-code 命令
@@ -18,6 +22,13 @@ def send_gcode(gcode_command):
 
 def reset():
     send_gcode("G28") # 回原点
+
+def soft_reset():
+    move(128, 128, 10, MOTOR_SPEED) # 回原点
+
+def show_hotbed():
+    move(272, 240, 10, MOTOR_SPEED)
+    
 
 def lock_motor():
     send_gcode("M17 ; 锁定所有电机")
@@ -29,11 +40,18 @@ def unlock_motor():
 def move(px, py, pz, speed=None):
     global position_x, position_y, position_z
 
-    # 确保 x, y, z 在 [10, 200] 范围内
-    for distance in [px, py, pz]:
-        if distance < 10 or distance > 200:
-            print(f"{distance} 不在 [10, 200] 范围内")
-            return False
+    # 确保 px, py, pz 在 合理范围内
+    if px < PX_LIMIT[0] or px > PX_LIMIT[1]:
+        print(f"px: {px} 不在合理范围内")
+        return False
+    
+    if py < PY_LIMIT[0] or py > PY_LIMIT[1]:
+        print(f"py: {py} 不在合理范围内")
+        return False
+    
+    if pz < PZ_LIMIT[0] or pz > PZ_LIMIT[1]:
+        print(f"pz: {pz} 不在合理范围内")
+        return False
     
     # 更新到全局变量
     position_x, position_y, position_z = px, py, pz
@@ -44,7 +62,7 @@ def move(px, py, pz, speed=None):
 
     print(f"已移动到 ({position_x}, {position_y}, {position_z})")
 
-    notice_finish()
+    # notice_finish()
 
     return True
 
@@ -58,11 +76,18 @@ def move_relative(dx, dy, dz, speed=None):
     py += dy
     pz += dz
 
-    # 确保 x, y, z 在 [10, 200] 范围内
-    for distance in [px, py, pz]:
-        if distance < 10 or distance > 200:
-            print(f"{distance} 不在 [10, 200] 范围内")
-            return False
+    # 确保 px, py, pz 在 合理范围内
+    if px < PX_LIMIT[0] or px > PX_LIMIT[1]:
+        print(f"px: {px} 不在合理范围内")
+        return False
+    
+    if py < PY_LIMIT[0] or py > PY_LIMIT[1]:
+        print(f"py: {py} 不在合理范围内")
+        return False
+    
+    if pz < PZ_LIMIT[0] or pz > PZ_LIMIT[1]:
+        print(f"pz: {pz} 不在合理范围内")
+        return False
     
     # 更新到全局变量
     position_x, position_y, position_z = px, py, pz
@@ -74,7 +99,8 @@ def move_relative(dx, dy, dz, speed=None):
 
     print(f"已移动到 ({position_x}, {position_y}, {position_z})")
 
-    notice_finish()
+    # notice_finish()
+    
     return True
 
 def move_x(x, speed=None):
@@ -97,12 +123,7 @@ def move_relative_z(dz, speed=None):
 
 def notice_finish():
     bambu_client.send_gcode("""
-        ;
-        ;music_long: 15
-        M17
-        M400 S1
         M1006 S1
-        M1006 L70 M70 N99
         M1006 C37 D25 M69 
         M1006 W
                """)
@@ -122,16 +143,23 @@ if __name__ == "__main__":
 
     # reset()
 
-    move(128, 128, 10, 12000)
+    soft_reset()
+
     # move_relative(-50, -50, 10, 12000)
     # move_relative(-50, -50, 10, 12000)
     # move_relative(-50, -50, 10, 12000)
-    move_relative(50, 50, 50)
-    move_relative(50, 50, 50)
-    move_relative(50, 50, 50)
-    move_relative(50, 50, 50)
+    # move_relative(50, 50, 50)
+    # move_relative(50, 50, 50)
+    # move_relative(50, 50, 50)
+    # move_relative(50, 50, 50)
     
     # move_relative(0, 0, 50, 12000)
     # move_relative(0, 0, 50, 12000)
     # move_relative(0, 0, 50, 12000)
     # move_relative(0, 0, 50, 12000)
+
+    # soft_reset()
+
+    show_hotbed()
+
+    
