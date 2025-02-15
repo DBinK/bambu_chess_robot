@@ -8,6 +8,9 @@ position_x  = 128
 position_y  = 128
 position_z  = 10
 
+# 默认电机速度
+MOTOR_SPEED = 12000
+
 def send_gcode(gcode_command):
     # 发送 G-code 命令
     bambu_client.send_gcode(gcode_command)
@@ -36,7 +39,7 @@ def move(px, py, pz, speed=None):
     position_x, position_y, position_z = px, py, pz
     
     send_gcode("G90 ; 设置为绝对坐标") 
-    send_gcode(f"G0 X{px} Y{py} Z{pz} {'F' + str(speed) if speed else ''}")
+    send_gcode(f"G0 X{px} Y{py} Z{pz} {'F' + str(speed) if speed else MOTOR_SPEED}")
     send_gcode("M400 ; 等待所有命令执行完毕") 
 
     print(f"已移动到 ({position_x}, {position_y}, {position_z})")
@@ -65,7 +68,7 @@ def move_relative(dx, dy, dz, speed=None):
     position_x, position_y, position_z = px, py, pz
     
     send_gcode("G91 ; 设置为相对坐标") 
-    send_gcode(f"G0 X{dx} Y{dy} Z{dz} {'F' + str(speed) if speed else ''}")
+    send_gcode(f"G0 X{dx} Y{dy} Z{dz} {'F' + str(speed) if speed else MOTOR_SPEED}")
     send_gcode("M400 ; 等待所有命令执行完毕")
     send_gcode("G90 ; 设置回绝对坐标") 
 
@@ -117,16 +120,16 @@ if __name__ == "__main__":
 
     # move(50, 50, 10, 12000)
 
-    reset()
+    # reset()
 
-    # move(128, 128, 10, 12000)
+    move(128, 128, 10, 12000)
     # move_relative(-50, -50, 10, 12000)
     # move_relative(-50, -50, 10, 12000)
     # move_relative(-50, -50, 10, 12000)
-    # move_relative(50, 50, 50, 12000)
-    # move_relative(50, 50, 50, 12000)
-    # move_relative(50, 50, 50, 12000)
-    # move_relative(50, 50, 50, 12000)
+    move_relative(50, 50, 50)
+    move_relative(50, 50, 50)
+    move_relative(50, 50, 50)
+    move_relative(50, 50, 50)
     
     # move_relative(0, 0, 50, 12000)
     # move_relative(0, 0, 50, 12000)
