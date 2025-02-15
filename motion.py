@@ -1,165 +1,120 @@
 from bambu_connect import BambuClient
-
 from config import hostname, access_code, serial
 
-bambu_client = BambuClient(hostname, access_code, serial)
+class BambuMotion:
+    def __init__(self, reset=True):
+        self.bambu_client = BambuClient(hostname, access_code, serial)
+        self.position_x = 128
+        self.position_y = 128
+        self.position_z = 10
 
-# 默认位置
-position_x  = 128
-position_y  = 128
-position_z  = 10
+        self.MOTOR_SPEED = 12000
 
-# 默认电机速度
-MOTOR_SPEED = 12000
-PX_LIMIT = [0, 280]
-PY_LIMIT = [10, 240]
-PZ_LIMIT = [10, 200]
+        self.PX_LIMIT = [0, 280]
+        self.PY_LIMIT = [10, 240]
+        self.PZ_LIMIT = [10, 200]
 
-def send_gcode(gcode_command):
-    # 发送 G-code 命令
-    bambu_client.send_gcode(gcode_command)
-    print(f"发送了 G-code 命令: {gcode_command}")
+        if reset:
+            self.hard_reset()
 
-def reset():
-    send_gcode("G28") # 回原点
+    def send_gcode(self, gcode_command):
+        self.bambu_client.send_gcode(gcode_command)
+        print(f"发送了 G-code 命令: {gcode_command}")
 
-def soft_reset():
-    move(128, 128, 10, MOTOR_SPEED) # 回原点
+    def hard_reset(self):
+        self.send_gcode("G28")  # 回原点
 
-def show_hotbed():
-    move(272, 240, 10, MOTOR_SPEED)
+    def soft_reset(self):
+        self.move(128, 128, 10, self.MOTOR_SPEED)  # 回原点
+
+    def show_hotbed(self):
+        self.move(273, 240, 10, self.MOTOR_SPEED)
+
+    def lock_motor(self):
+        self.send_gcode("M17 ; 锁定所有电机")
+
+    def unlock_motor(self):
+        self.send_gcode("M18 ; 解锁所有电机")
+
+    def _check_limits(self, px, py, pz):
+        if px < self.PX_LIMIT[0] or px > self.PX_LIMIT[1]:
+            print(f"px: {px} 不在合理范围内")
+            return False
+
+        if py < self.PY_LIMIT[0] or py > self.PY_LIMIT[1]:
+            print(f"py: {py} 不在合理范围内")
+            return False
+
+        if pz < self.PZ_LIMIT[0] or pz > self.PZ_LIMIT[1]:
+            print(f"pz: {pz} 不在合理范围内")
+            return False
+
+        return True
     
+    def move(self, px, py, pz, speed=None):
+        if not self._check_limits(px, py, pz):
+            return False
 
-def lock_motor():
-    send_gcode("M17 ; 锁定所有电机")
+        self.position_x, self.position_y, self.position_z = px, py, pz
 
-def unlock_motor():
-    send_gcode("M18 ; 解锁所有电机")
+        self.send_gcode("G90 ; 设置为绝对坐标")
+        self.send_gcode(f"G0 X{px} Y{py} Z{pz} {'F' + str(speed) if speed else self.MOTOR_SPEED}")
+        self.send_gcode("M400 ; 等待所有命令执行完毕")
 
-# 绝对坐标移动
-def move(px, py, pz, speed=None):
-    global position_x, position_y, position_z
+        print(f"已移动到 ({self.position_x}, {self.position_y}, {self.position_z})")
+        return True
 
-    # 确保 px, py, pz 在 合理范围内
-    if px < PX_LIMIT[0] or px > PX_LIMIT[1]:
-        print(f"px: {px} 不在合理范围内")
-        return False
-    
-    if py < PY_LIMIT[0] or py > PY_LIMIT[1]:
-        print(f"py: {py} 不在合理范围内")
-        return False
-    
-    if pz < PZ_LIMIT[0] or pz > PZ_LIMIT[1]:
-        print(f"pz: {pz} 不在合理范围内")
-        return False
-    
-    # 更新到全局变量
-    position_x, position_y, position_z = px, py, pz
-    
-    send_gcode("G90 ; 设置为绝对坐标") 
-    send_gcode(f"G0 X{px} Y{py} Z{pz} {'F' + str(speed) if speed else MOTOR_SPEED}")
-    send_gcode("M400 ; 等待所有命令执行完毕") 
+    def move_relative(self, dx, dy, dz, speed=None):
+        px, py, pz = self.position_x + dx, self.position_y + dy, self.position_z + dz
 
-    print(f"已移动到 ({position_x}, {position_y}, {position_z})")
+        if not self._check_limits(px, py, pz):
+            return False
 
-    # notice_finish()
+        self.position_x, self.position_y, self.position_z = px, py, pz
 
-    return True
+        self.send_gcode("G91 ; 设置为相对坐标")
+        self.send_gcode(f"G0 X{dx} Y{dy} Z{dz} {'F' + str(speed) if speed else self.MOTOR_SPEED}")
+        self.send_gcode("M400 ; 等待所有命令执行完毕")
+        self.send_gcode("G90 ; 设置回绝对坐标")
 
-def move_relative(dx, dy, dz, speed=None):
-    global position_x, position_y, position_z
+        print(f"已移动到 ({self.position_x}, {self.position_y}, {self.position_z})")
+        return True
 
-    px, py, pz = position_x, position_y, position_z
+    def move_x(self, x, speed=None):
+        return self.move(x, self.position_y, self.position_z, speed)
 
-    # 更新位置
-    px += dx
-    py += dy
-    pz += dz
+    def move_y(self, y, speed=None):
+        return self.move(self.position_x, y, self.position_z, speed)
 
-    # 确保 px, py, pz 在 合理范围内
-    if px < PX_LIMIT[0] or px > PX_LIMIT[1]:
-        print(f"px: {px} 不在合理范围内")
-        return False
-    
-    if py < PY_LIMIT[0] or py > PY_LIMIT[1]:
-        print(f"py: {py} 不在合理范围内")
-        return False
-    
-    if pz < PZ_LIMIT[0] or pz > PZ_LIMIT[1]:
-        print(f"pz: {pz} 不在合理范围内")
-        return False
-    
-    # 更新到全局变量
-    position_x, position_y, position_z = px, py, pz
-    
-    send_gcode("G91 ; 设置为相对坐标") 
-    send_gcode(f"G0 X{dx} Y{dy} Z{dz} {'F' + str(speed) if speed else MOTOR_SPEED}")
-    send_gcode("M400 ; 等待所有命令执行完毕")
-    send_gcode("G90 ; 设置回绝对坐标") 
+    def move_z(self, z, speed=None):
+        return self.move(self.position_x, self.position_y, z, speed)
 
-    print(f"已移动到 ({position_x}, {position_y}, {position_z})")
+    def move_relative_x(self, dx, speed=None):
+        return self.move_relative(dx, 0, 0, speed)
 
-    # notice_finish()
-    
-    return True
+    def move_relative_y(self, dy, speed=None):
+        return self.move_relative(0, dy, 0, speed)
 
-def move_x(x, speed=None):
-    return move(x, position_y, position_z, speed)
+    def move_relative_z(self, dz, speed=None):
+        return self.move_relative(0, 0, dz, speed)
 
-def move_y(y, speed=None):
-    return move(position_x, y, position_z, speed)
-
-def move_z(z, speed=None):
-    return move(position_x, position_y, z, speed)
-
-def move_relative_x(dx, speed=None):
-    return move_relative(dx, 0, 0, speed)
-
-def move_relative_y(dy, speed=None):
-    return move_relative(0, dy, 0, speed)
-
-def move_relative_z(dz, speed=None):
-    return move_relative(0, 0, dz, speed)
-
-def notice_finish():
-    bambu_client.send_gcode("""
-        M1006 S1
-        M1006 C37 D25 M69 
-        M1006 W
-               """)
+    def notice_finish(self):
+        self.bambu_client.send_gcode("""
+            M1006 S1
+            M1006 C37 D25 M69 
+            M1006 W
+                   """)
 
 
 
 if __name__ == "__main__":
 
-    # gcode_command = "G28"   # 回原点
+    robot = BambuMotion(reset=False)
 
-    # gcode_command = "G0 X50 Y50 Z10 F3000 ; 以 300 mm/min 的速度移动到 (50, 50, 10)"
-    # gcode_command = "G1 X128 Y128 Z10 F3000 ; 以 300 mm/min 的速度移动到 (50, 50, 10)"
+    robot.send_gcode("M400")
 
-    # send_gcode(gcode_command)
+    robot.soft_reset()
 
-    # move(50, 50, 10, 12000)
+    robot.move_piece(128, 128, 50, 50)
 
-    # reset()
-
-    soft_reset()
-
-    # move_relative(-50, -50, 10, 12000)
-    # move_relative(-50, -50, 10, 12000)
-    # move_relative(-50, -50, 10, 12000)
-    # move_relative(50, 50, 50)
-    # move_relative(50, 50, 50)
-    # move_relative(50, 50, 50)
-    # move_relative(50, 50, 50)
-    
-    # move_relative(0, 0, 50, 12000)
-    # move_relative(0, 0, 50, 12000)
-    # move_relative(0, 0, 50, 12000)
-    # move_relative(0, 0, 50, 12000)
-
-    # soft_reset()
-
-    show_hotbed()
-
-    
+    robot.show_hotbed()
