@@ -8,7 +8,7 @@ class BambuMotion:
         self.position_y = 128
         self.position_z = 10
 
-        self.MOTOR_SPEED = 12000
+        self.MOTOR_SPEED = 18000
 
         self.PX_LIMIT = [0, 280]
         self.PY_LIMIT = [10, 240]
@@ -26,9 +26,6 @@ class BambuMotion:
 
     def soft_reset(self):
         self.move(128, 128, 10, self.MOTOR_SPEED)  # 回原点
-
-    def show_hotbed(self):
-        self.move(273, 240, 10, self.MOTOR_SPEED)
 
     def lock_motor(self):
         self.send_gcode("M17 ; 锁定所有电机")
@@ -58,7 +55,7 @@ class BambuMotion:
         self.position_x, self.position_y, self.position_z = px, py, pz
 
         self.send_gcode("G90 ; 设置为绝对坐标")
-        self.send_gcode(f"G0 X{px} Y{py} Z{pz} {'F' + str(speed) if speed else self.MOTOR_SPEED}")
+        self.send_gcode(f"G0 X{px} Y{py} Z{pz} F{str(speed) if speed else self.MOTOR_SPEED}")
         self.send_gcode("M400 ; 等待所有命令执行完毕")
 
         print(f"已移动到 ({self.position_x}, {self.position_y}, {self.position_z})")
@@ -73,7 +70,7 @@ class BambuMotion:
         self.position_x, self.position_y, self.position_z = px, py, pz
 
         self.send_gcode("G91 ; 设置为相对坐标")
-        self.send_gcode(f"G0 X{dx} Y{dy} Z{dz} {'F' + str(speed) if speed else self.MOTOR_SPEED}")
+        self.send_gcode(f"G0 X{dx} Y{dy} Z{dz} F{str(speed) if speed else self.MOTOR_SPEED}")
         self.send_gcode("M400 ; 等待所有命令执行完毕")
         self.send_gcode("G90 ; 设置回绝对坐标")
 
@@ -114,7 +111,3 @@ if __name__ == "__main__":
     robot.send_gcode("M400")
 
     robot.soft_reset()
-
-    robot.move_piece(128, 128, 50, 50)
-
-    robot.show_hotbed()
