@@ -62,5 +62,5 @@ if __name__ == "__main__":
 
     robot.move_piece(180, 180, 50, 50)
 
-    time.sleep(10)
-    robot.soft_reset(30000)
+    #time.sleep(10)
+    #robot.soft_reset(30000)

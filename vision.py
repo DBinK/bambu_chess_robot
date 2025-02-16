@@ -54,8 +54,8 @@ def draw(img, detections):
             f"ID: {detection.tag_id}",
             center,
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.5,
-            (255, 0, 0),
+            1.0,
+            (0, 0, 222),
             2,
         )  # 红色文本
 
