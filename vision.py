@@ -27,7 +27,7 @@ def get_tag_size(corners):
 
     return width, height
 
-def filter_by_size(detections, min_size=(20, 20), max_size=(100, 100)):
+def filter_by_size(detections, min_size=(30, 30), max_size=(100, 100)):
     valid_tags = []
     for detection in detections:
         tag_id = detection.tag_id  # 假设 tag_id 是一个属性
