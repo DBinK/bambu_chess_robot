@@ -110,8 +110,8 @@ def transform_object_to_image(point_obj, H_inv):
 def transform_object_to_printer(point_obj):
     # 长方形区域坐标系 转换为 打印机坐标系
     point_printer = [0, 0]
-    point_printer[0] = (point_obj[0] / 10) - 16
-    point_printer[1] = 224 - (-point_obj[1] / 10) - 16  # 翻转y轴
+    point_printer[0] = (point_obj[0] / 10) + 16
+    point_printer[1] = 224 - (point_obj[1] / 10) + 16  # 翻转y轴
 
     return point_printer
 
