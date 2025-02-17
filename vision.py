@@ -132,9 +132,16 @@ def Homo_trans(img, detections):
     H, _ = cv2.findHomography(image_points, object_points)
 
     # 应用透视变换
-    transformed_image = cv2.warpPerspective(img, H, (width, height))
+    warped_image = cv2.warpPerspective(img, H, (width, height))
 
-    return transformed_image
+    # 计算反向变换矩阵
+    H_inv = np.linalg.inv(H)
+
+    # 反向变换回原图像空间
+    height_original, width_original = img.shape[:2]
+    reversed_warped_image = cv2.warpPerspective(warped_image, H_inv, (width_original, height_original))
+
+    return warped_image, reversed_warped_image
 
 def draw_tags(img, detections):
 
@@ -194,9 +201,13 @@ if __name__ == "__main__":
     # cv2.imshow("Inv Warped Image", inv_warped_image)
 
     # 透视变换2
-    img_trans = Homo_trans(img, detections)
-    cv2.namedWindow("Transformed Image 2", cv2.WINDOW_NORMAL)
-    cv2.imshow("Transformed Image 2", img_trans)
+    img_trans, img_retrans = Homo_trans(img, detections)
+
+    cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
+    cv2.imshow("Warped Image", img_trans)
+
+    cv2.namedWindow("Inv Warped Image", cv2.WINDOW_NORMAL)
+    cv2.imshow("Inv Warped Image", img_retrans)
 
     # 显示结果
     cv2.namedWindow("Detected AprilTags", cv2.WINDOW_NORMAL)
