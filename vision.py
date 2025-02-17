@@ -14,56 +14,62 @@ at_detector = Detector(
     debug=0,  # 设置调试模式级别，0表示不启用调试模式
 )
 
-def get_tag_size(corners):
-    # 获取角点坐标的 NumPy 数组
-    x_coords = corners[:, 0]
-    y_coords = corners[:, 1]
-    
-    # 计算宽度和高度
-    width = np.max(x_coords) - np.min(x_coords)
-    height = np.max(y_coords) - np.min(y_coords)
-
-    print(f"Tag size: width={width}, height={height}.")
-
-    return width, height
-
-def filter_by_size(detections, min_size=(30, 30), max_size=(100, 100)):
-    valid_tags = []
-    for detection in detections:
-        tag_id = detection.tag_id  # 假设 tag_id 是一个属性
-        corners = detection.corners  # 假设 corners 是一个 NumPy 数组
-
-        # 计算标签大小
-        width, height = get_tag_size(corners)
-
-        # 根据大小过滤标签
-        if (min_size[0] <= width <= max_size[0]) and (min_size[1] <= height <= max_size[1]):
-            valid_tags.append(detection)
-        else:
-            print(f"Tag {tag_id} is filtered out due to size: width={width}, height={height}.")
-    
-    return valid_tags
-
 def pre_process(img):
     # 预处理
-    img_gary = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 将图像转换为灰度图像
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 将图像转换为灰度图像
     # img = cv2.GaussianBlur(img, (7, 7), 0)  # 应用高斯滤波以平滑图像
-    _, img_bin = cv2.threshold(img_gary, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)  # 二值化
+    _, img_bin = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)  # 二值化
 
     return img_bin
 
-def detect_tags(img):
-    # 检测标记
-    detections = at_detector.detect(img)
-    # 过滤
-    detections = filter_by_size(detections)
 
-    # for detection in detections:
-    #     print(f"Tag {detection.tag_id}, corners={detection.corners}")
+def detect_tags(img):
+    def get_tag_size(corners):
+        # 获取角点坐标的 NumPy 数组
+        x_coords = corners[:, 0]
+        y_coords = corners[:, 1]
+        
+        # 计算宽度和高度
+        width = np.max(x_coords) - np.min(x_coords)
+        height = np.max(y_coords) - np.min(y_coords)
+
+        print(f"Tag size: width={width}, height={height}.")
+
+        return width, height
+
+    def filter_by_size(detections, min_size=(30, 30), max_size=(100, 100)):
+        valid_tags = []
+        for detection in detections:
+            tag_id = detection.tag_id  
+            corners = detection.corners  
+
+            # 计算标签大小
+            width, height = get_tag_size(corners)
+
+            # 根据大小过滤标签
+            if (min_size[0] <= width <= max_size[0]) and (min_size[1] <= height <= max_size[1]):
+                valid_tags.append(detection)
+            else:
+                print(f"Tag {tag_id} is filtered out due to size: width={width}, height={height}.")
+        
+        return valid_tags
+    
+    detections = at_detector.detect(img)      # 检测标记
+    detections = filter_by_size(detections)   # 过滤掉不符合大小的标记
 
     return detections
 
 def tags_to_quad_vertices(detections):
+    """ 将 Apriltag 标记的角点坐标 转换为 列表形式 """
+
+    # 确保每个需要的 id 都存在
+    tag_ids = [detection.tag_id for detection in detections]
+
+    if not all(tag_id in [1, 6, 16, 11] for tag_id in tag_ids):
+        print("Apriltag 标记不全, 无法继续进行识别")
+        return None
+        
+    # 提取标记的角点坐标
     for detection in detections:
         if detection.tag_id == 1:
             x1, y1 = detection.center.tolist()
@@ -161,6 +167,31 @@ def draw_tags(img, detections):
 
     return img_draw
 
+def detect_chess(img_trans):
+    img_gray = cv2.cvtColor(img_trans, cv2.COLOR_BGR2GRAY)
+    _, img_bin = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)  # 二值化
+    cv2.imshow("img_bin", img_bin)
+    img_blur = cv2.medianBlur(img_bin, 15)
+
+    print("正在检测棋盘")
+    circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, dp=1, minDist=20,
+                            param1=50, param2=30, minRadius=0, maxRadius=0)
+
+    #将所有坐标和半信息取整数
+    circles = np.uint(np.around(circles))
+    print(circles) #打印线段信息
+
+    return circles
+
+def draw_chess(img_trans, circles):
+    img_chess = img_trans.copy()
+    for i in range(len(circles[0])):
+        x, y, r = circles[0][i]
+        cv2.circle(img_chess, (x, y), r, (0, 255, 0), 2)
+        cv2.circle(img_chess, (x, y), 2, (0, 0, 255), 3)
+
+    return img_chess
+
 # 鼠标回调函数
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:  # 检测左键点击事件
@@ -184,23 +215,29 @@ if __name__ == "__main__":
     # img = cv2.imread("test/tag_2.jpg")
     img = cv2.imread("test/tag_3.jpg")
 
+    # 预处理
     img_pre = pre_process(img)
 
     # 检测标记
     detections = detect_tags(img_pre)
     quad_vertices = tags_to_quad_vertices(detections)
 
-    # 绘制检测结果
+    # 绘制tag检测结果
     img_draw = draw_tags(img, detections)
 
     # 透视变换
     H_matrix, H_inv = Homo_trans(quad_vertices)
     img_trans, img_retrans = draw_homo_trans(img, H_matrix)
 
-    # 坐标系转换
-    # p_obj = [2240/7-70, 2240/2]
-    # p_raw = transform_object_to_image(p_obj, H_inv)
+    # 棋子检测
+    print("开始检测棋子")
+    circles = detect_chess(img_trans)
+    img_chess = draw_chess(img_trans, circles)
 
+    cv2.namedWindow('chess Image', cv2.WINDOW_NORMAL)
+    cv2.imshow('chess Image', img_chess)
+
+    # 坐标系转换
     # p_raw = [508, 373]  # 1号点
     # p_raw = [349, 925]  # 3号点
     # p_raw = [1128, 942]  # 4号点
@@ -208,11 +245,11 @@ if __name__ == "__main__":
     p_raw = [685, 509]  # 6号点
     
     p_obj = transform_image_to_object(p_raw, H_matrix)
-    p_prt = transform_object_to_printer(p_obj)   # 翻转y轴, 转换为打印机坐标系
+    p_prt = transform_object_to_printer(p_obj)          # 翻转y轴, 转换为打印机坐标系
 
     print(f"raw: {int(p_raw[0])}, {int(p_raw[1])}")
     print(f"obj: {int(p_obj[0])}, {int(p_obj[1])}")
-    print(f"obj_fix: {int(p_prt[0])}, {int(p_prt[1])}")
+    print(f"prt: {int(p_prt[0])}, {int(p_prt[1])}")
 
     # 标记点
     cv2.putText(img_trans, f"{int(p_prt[0])},{int(p_prt[1])}", (int(p_obj[0]+100), int(p_obj[1])), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
