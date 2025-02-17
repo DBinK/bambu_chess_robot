@@ -108,7 +108,7 @@ def draw_warped_image(img, M, inv_M):    # 用于检查变换效果
     
     return warped_image, inv_warped_image
 
-def Homo_trans(img, detections):
+def Homo_trans(detections):
 
     for detection in detections:
         if detection.tag_id == 1:
@@ -130,6 +130,13 @@ def Homo_trans(img, detections):
 
     # 计算同伦变换矩阵
     H, _ = cv2.findHomography(image_points, object_points)
+
+    return H
+
+def draw_persp_trans(img, H):
+    
+    width = 2520   # 设置为你想要显示的宽度
+    height = 2520  # 设置为你想要显示的高度
 
     # 应用透视变换
     warped_image = cv2.warpPerspective(img, H, (width, height))
@@ -201,7 +208,8 @@ if __name__ == "__main__":
     # cv2.imshow("Inv Warped Image", inv_warped_image)
 
     # 透视变换2
-    img_trans, img_retrans = Homo_trans(img, detections)
+    H = Homo_trans(detections)
+    img_trans, img_retrans = draw_persp_trans(img, H)
 
     cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
     cv2.imshow("Warped Image", img_trans)
