@@ -80,7 +80,7 @@ def persp_trans(img, detections):
     height, width = img.shape[:2]  # 目标棋盘坐标系的高度和宽度
     # height, width = 2520, 2520  # 目标棋盘坐标系的高度和宽度
 
-    # 定义目标矩形的顶点坐标，即变换后的图像矩形框
+    # 定义变换后的棋盘坐标系高宽
     dst = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype="float32")
 
     # 计算透视变换矩阵
@@ -108,6 +108,33 @@ def draw_warped_image(img, M, inv_M):    # 用于检查变换效果
     
     return warped_image, inv_warped_image
 
+def Homo_trans(img, detections):
+
+    for detection in detections:
+        if detection.tag_id == 1:
+            x1, y1 = detection.center.tolist()
+        elif detection.tag_id == 6:
+            x2, y2 = detection.center.tolist()
+        elif detection.tag_id == 16:
+            x3, y3 = detection.center.tolist()
+        elif detection.tag_id == 11:
+            x4, y4= detection.center.tolist()
+
+    # 定义图像中的长方形四个顶点（根据你实际值设定）
+    image_points = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]], dtype='float32')
+
+    # 定义目标长方形的四个顶点
+    width = 2520  # 设置为你想要的宽度
+    height = 2520  # 设置为你想要的高度
+    object_points = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype='float32')
+
+    # 计算同伦变换矩阵
+    H, _ = cv2.findHomography(image_points, object_points)
+
+    # 应用透视变换
+    transformed_image = cv2.warpPerspective(img, H, (width, height))
+
+    return transformed_image
 
 def draw_tags(img, detections):
 
@@ -145,7 +172,8 @@ def draw_tags(img, detections):
 if __name__ == "__main__":
     # 读取图像
     # img = cv2.imread("test/apriltag.jpg")
-    img = cv2.imread("test/tag_2.jpg")
+    # img = cv2.imread("test/tag_2.jpg")
+    img = cv2.imread("test/tag_3.jpg")
 
     img_pre = pre_process(img)
 
@@ -156,16 +184,21 @@ if __name__ == "__main__":
     img_draw = draw_tags(img, detections)
 
     # 透视变换
-    M, inv_M = persp_trans(img, detections)
-    warped_image, inv_warped_image = draw_warped_image(img, M, inv_M)
+    # M, inv_M = persp_trans(img, detections)
+    # warped_image, inv_warped_image = draw_warped_image(img, M, inv_M)
+
+    # cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
+    # cv2.imshow("Warped Image", warped_image)
+
+    # cv2.namedWindow("Inv Warped Image", cv2.WINDOW_NORMAL)
+    # cv2.imshow("Inv Warped Image", inv_warped_image)
+
+    # 透视变换2
+    img_trans = Homo_trans(img, detections)
+    cv2.namedWindow("Transformed Image 2", cv2.WINDOW_NORMAL)
+    cv2.imshow("Transformed Image 2", img_trans)
 
     # 显示结果
-    cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
-    cv2.imshow("Warped Image", warped_image)
-
-    cv2.namedWindow("Inv Warped Image", cv2.WINDOW_NORMAL)
-    cv2.imshow("Inv Warped Image", inv_warped_image)
-
     cv2.namedWindow("Detected AprilTags", cv2.WINDOW_NORMAL)
     cv2.imshow("Detected AprilTags", img_draw)
     cv2.waitKey(0)

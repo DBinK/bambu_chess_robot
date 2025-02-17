@@ -11,7 +11,7 @@ camera_params = {
     'image_width': 1280,
     'image_height': 720,
     'auto_exposure': 1,
-    'exposure_time': 100,
+    'exposure_time': 200,
     'fps': 60,
     'gain': 100,
 }
@@ -77,10 +77,11 @@ class USBCamera:
         while True:
             ret, frame = self.cap.read()
             
-            detections = vision.detect(frame)
+            img_pre = vision.pre_process(frame)
+            detections = vision.detect_tags(img_pre)
 
             # 绘制检测结果
-            img_draw = vision.draw(frame, detections)
+            img_draw = vision.draw_tags(frame, detections)
 
             if ret:
                 # if os.environ.get('DISPLAY') and os.isatty(0):  # 检查有无图形界面
