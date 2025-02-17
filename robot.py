@@ -13,6 +13,14 @@ class BambuRobot(BambuMotion):
             speed = self.Z_SPEED
         super().move_z(pz, speed)
 
+    # def move(self, px, py, pz, speed=None, delay=0):
+
+    #     px = px + 0
+    #     py = py + 0
+    #     pz = pz + 0
+
+    #     return super().move(px, py, pz, speed, delay)
+
     def capture_piece(self, from_x, from_y):
         print("开始 捕获棋子")
         self.move(from_x, from_y, self.STANDBY_Z)  # 移动到棋子 起始位置
@@ -61,9 +69,9 @@ if __name__ == "__main__":
     
     #robot.hard_reset()
 
-    robot.move(0,0,10)
-
     robot.show_chess_board()
+    # robot.move(110+20,44+20,10)
+
     #robot.move_piece(180, 180, 50, 50)
 
     # print("等待10秒后复位")

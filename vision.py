@@ -78,8 +78,8 @@ def tags_to_quad_vertices(detections):
 
     return quad_vertices
 
-def Homo_trans(quad_vertices, width=2520, height=2520):
-    """ function: Homo_trans"""
+def Homo_trans(quad_vertices, width=2160, height=2160):
+    """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
 
     # 定义图像中的长方形四个顶点（根据你实际值设定）
     image_points = np.array(quad_vertices, dtype='float32')
@@ -88,20 +88,32 @@ def Homo_trans(quad_vertices, width=2520, height=2520):
     object_points = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype='float32')
 
     # 计算同伦变换矩阵
-    H, _ = cv2.findHomography(image_points, object_points)
-
-    return H
-
-def draw_persp_trans(img, H):
-    
-    width = 2520   # 设置为你想要显示的宽度
-    height = 2520  # 设置为你想要显示的高度
-
-    # 应用透视变换
-    warped_image = cv2.warpPerspective(img, H, (width, height))
+    H_matrix , _ = cv2.findHomography(image_points, object_points)
 
     # 计算反向变换矩阵
-    H_inv = np.linalg.inv(H)
+    H_inv = np.linalg.inv(H_matrix)
+
+    return H_matrix, H_inv
+
+def transform_image_to_object(point_raw, H_matrix):
+    # 输入图像坐标系坐标，输出长方形区域坐标系坐标
+    point_homogeneous = np.array([point_raw[0], point_raw[1], 1])  # 转换为齐次坐标
+    transformed_point = H_matrix @ point_homogeneous  # 进行变换
+    return transformed_point[0] / transformed_point[2], transformed_point[1] / transformed_point[2]
+
+def transform_object_to_image(point_obj, H_inv):
+    # 输入长方形区域坐标系坐标，输出图像坐标系坐标
+    point_homogeneous = np.array([point_obj[0], point_obj[1], 1])  # 转换为齐次坐标
+    transformed_point = H_inv @ point_homogeneous  # 进行反向变换
+    return transformed_point[0] / transformed_point[2], transformed_point[1] / transformed_point[2]
+
+def draw_homo_trans(img, H_matrix, width=2160, height=2160):
+
+    # 应用透视变换
+    warped_image = cv2.warpPerspective(img, H_matrix , (width, height))
+
+    # 计算反向变换矩阵
+    H_inv = np.linalg.inv(H_matrix)
 
     # 反向变换回原图像空间
     height_original, width_original = img.shape[:2]
@@ -141,6 +153,22 @@ def draw_tags(img, detections):
 
     return img_draw
 
+# 鼠标回调函数
+def click_event(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:  # 检测左键点击事件
+        
+        #p_raw = [x, y]
+        #p_obj = transform_image_to_object(p_raw, H_matrix)
+        #p_obj_fix = [(p_obj[0]/10)-20, (p_obj[1]/10)-20]
+
+        print(f'点击坐标: ({x}, {y})')  # 打印点击的坐标
+        # print(f'转换坐标: ({p_obj[0]}, {p_obj[1]})')
+        # print(f'转换坐标fix: ({p_obj_fix[0]}, {p_obj_fix[1]})')
+
+        # cv2.putText(img_trans, f"{int(p_obj_fix[0])},{int(p_obj_fix[1])}", (int(p_obj[0]+100), int(p_obj[1])), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
+        # cv2.circle(img_trans, (int(p_obj[0]), int(p_obj[1])), 50, (0, 0, 255), -1)
+        # cv2.imshow('Warped Image', img_raw)  # 重新显示图像
+
 
 if __name__ == "__main__":
     # 读取图像
@@ -158,23 +186,34 @@ if __name__ == "__main__":
     img_draw = draw_tags(img, detections)
 
     # 透视变换
-    # M, inv_M = persp_trans(img, detections)
-    # warped_image, inv_warped_image = draw_warped_image(img, M, inv_M)
+    H_matrix, H_inv = Homo_trans(quad_vertices)
+    img_trans, img_retrans = draw_homo_trans(img, H_matrix)
 
-    # cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
-    # cv2.imshow("Warped Image", warped_image)
+    # 坐标系转换
+    # p_obj = [2160/7-70, 2160/2]
+    # p_raw = transform_object_to_image(p_obj, H_inv)
 
-    # cv2.namedWindow("Inv Warped Image", cv2.WINDOW_NORMAL)
-    # cv2.imshow("Inv Warped Image", inv_warped_image)
+    # p_raw = [508, 373]  # 1号点
+    p_raw = [1128, 942]  # 4号点
+    p_obj = transform_image_to_object(p_raw, H_matrix)
+    p_obj_fix =  [(p_obj[0]/10)-0, (p_obj[1]/10)-0]
 
-    # 透视变换2
-    H = Homo_trans(quad_vertices)
-    img_trans, img_retrans = draw_persp_trans(img, H)
+    print(f"raw: {int(p_raw[0])}, {int(p_raw[1])}")
+    print(f"obj: {int(p_obj[0])}, {int(p_obj[1])}")
+    print(f"obj_fix: {int(p_obj_fix[0])}, {int(p_obj_fix[1])}")
+
+    # 标记点
+    cv2.putText(img_trans, f"{int(p_obj_fix[0])},{int(p_obj_fix[1])}", (int(p_obj[0]+100), int(p_obj[1])), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
+    cv2.circle(img_trans, (int(p_obj[0]), int(p_obj[1])), 50, (0, 0, 255), -1)
+
+    cv2.putText(img_retrans, f"{int(p_raw[0])},{int(p_raw[1])}", (int(p_raw[0]+10), int(p_raw[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+    cv2.circle(img_retrans, (int(p_raw[0]), int(p_raw[1])), 10, (0, 0, 255), -1)
 
     cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
     cv2.imshow("Warped Image", img_trans)
 
     cv2.namedWindow("Inv Warped Image", cv2.WINDOW_NORMAL)
+    cv2.setMouseCallback('Inv Warped Image', click_event)  # 绑定鼠标回调函数到窗口
     cv2.imshow("Inv Warped Image", img_retrans)
 
     # 显示结果
