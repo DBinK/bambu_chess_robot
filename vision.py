@@ -63,53 +63,7 @@ def detect_tags(img):
 
     return detections
 
-def persp_trans(img, detections):
-    # 取出顶点坐标
-    rect = np.zeros((4, 2), dtype="float32")
-
-    for detection in detections:
-        if detection.tag_id == 1:
-            rect[0] = detection.center.tolist()
-        elif detection.tag_id == 6:
-            rect[1] = detection.center.tolist()
-        elif detection.tag_id == 16:
-            rect[2] = detection.center.tolist()
-        elif detection.tag_id == 11:
-            rect[3] = detection.center.tolist()
-            
-    height, width = img.shape[:2]  # 目标棋盘坐标系的高度和宽度
-    # height, width = 2520, 2520  # 目标棋盘坐标系的高度和宽度
-
-    # 定义变换后的棋盘坐标系高宽
-    dst = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype="float32")
-
-    # 计算透视变换矩阵
-    M = cv2.getPerspectiveTransform(rect, dst)
-    inv_M = np.linalg.inv(M)
-
-    # 返回 变换矩阵 和 逆变换矩阵
-    return M, inv_M
-
-def draw_warped_image(img, M, inv_M):    # 用于检查变换效果
-    """
-    @param img: 输入图像
-    @param M: 透视变换矩阵
-    @param inv_M: 逆透视变换矩阵
-    @return: 透视变换后的图像
-    """
-    height, width = img.shape[:2]  # 获取图像的高度和宽度
-    # height, width = 2520, 2520  # 获取图像的高度和宽度
-
-    # 应用透视变换到图像上
-    warped_image = cv2.warpPerspective(img, M, (width, height))
-
-    # 应用逆透视变换到图像
-    inv_warped_image = cv2.warpPerspective(warped_image, inv_M,  (width, height))
-    
-    return warped_image, inv_warped_image
-
-def Homo_trans(detections):
-
+def tags_to_quad_vertices(detections):
     for detection in detections:
         if detection.tag_id == 1:
             x1, y1 = detection.center.tolist()
@@ -120,12 +74,17 @@ def Homo_trans(detections):
         elif detection.tag_id == 11:
             x4, y4= detection.center.tolist()
 
+    quad_vertices = [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+
+    return quad_vertices
+
+def Homo_trans(quad_vertices, width=2520, height=2520):
+    """ function: Homo_trans"""
+
     # 定义图像中的长方形四个顶点（根据你实际值设定）
-    image_points = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]], dtype='float32')
+    image_points = np.array(quad_vertices, dtype='float32')
 
     # 定义目标长方形的四个顶点
-    width = 2520  # 设置为你想要的宽度
-    height = 2520  # 设置为你想要的高度
     object_points = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype='float32')
 
     # 计算同伦变换矩阵
@@ -193,6 +152,7 @@ if __name__ == "__main__":
 
     # 检测标记
     detections = detect_tags(img_pre)
+    quad_vertices = tags_to_quad_vertices(detections)
 
     # 绘制检测结果
     img_draw = draw_tags(img, detections)
@@ -208,7 +168,7 @@ if __name__ == "__main__":
     # cv2.imshow("Inv Warped Image", inv_warped_image)
 
     # 透视变换2
-    H = Homo_trans(detections)
+    H = Homo_trans(quad_vertices)
     img_trans, img_retrans = draw_persp_trans(img, H)
 
     cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
