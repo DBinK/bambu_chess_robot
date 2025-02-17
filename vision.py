@@ -78,7 +78,7 @@ def tags_to_quad_vertices(detections):
 
     return quad_vertices
 
-def Homo_trans(quad_vertices, width=2160, height=2160):
+def Homo_trans(quad_vertices, width=2240, height=2240):
     """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
 
     # 定义图像中的长方形四个顶点（根据你实际值设定）
@@ -107,7 +107,15 @@ def transform_object_to_image(point_obj, H_inv):
     transformed_point = H_inv @ point_homogeneous  # 进行反向变换
     return transformed_point[0] / transformed_point[2], transformed_point[1] / transformed_point[2]
 
-def draw_homo_trans(img, H_matrix, width=2160, height=2160):
+def transform_object_to_printer(point_obj):
+    # 长方形区域坐标系 转换为 打印机坐标系
+    point_printer = [0, 0]
+    point_printer[0] = (point_obj[0] / 10) - 16
+    point_printer[1] = 224 - (-point_obj[1] / 10) - 16  # 翻转y轴
+
+    return point_printer
+
+def draw_homo_trans(img, H_matrix, width=2240, height=2240):
 
     # 应用透视变换
     warped_image = cv2.warpPerspective(img, H_matrix , (width, height))
@@ -190,20 +198,24 @@ if __name__ == "__main__":
     img_trans, img_retrans = draw_homo_trans(img, H_matrix)
 
     # 坐标系转换
-    # p_obj = [2160/7-70, 2160/2]
+    # p_obj = [2240/7-70, 2240/2]
     # p_raw = transform_object_to_image(p_obj, H_inv)
 
     # p_raw = [508, 373]  # 1号点
-    p_raw = [1128, 942]  # 4号点
+    # p_raw = [349, 925]  # 3号点
+    # p_raw = [1128, 942]  # 4号点
+
+    p_raw = [685, 509]  # 6号点
+    
     p_obj = transform_image_to_object(p_raw, H_matrix)
-    p_obj_fix =  [(p_obj[0]/10)-0, (p_obj[1]/10)-0]
+    p_prt = transform_object_to_printer(p_obj)   # 翻转y轴, 转换为打印机坐标系
 
     print(f"raw: {int(p_raw[0])}, {int(p_raw[1])}")
     print(f"obj: {int(p_obj[0])}, {int(p_obj[1])}")
-    print(f"obj_fix: {int(p_obj_fix[0])}, {int(p_obj_fix[1])}")
+    print(f"obj_fix: {int(p_prt[0])}, {int(p_prt[1])}")
 
     # 标记点
-    cv2.putText(img_trans, f"{int(p_obj_fix[0])},{int(p_obj_fix[1])}", (int(p_obj[0]+100), int(p_obj[1])), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
+    cv2.putText(img_trans, f"{int(p_prt[0])},{int(p_prt[1])}", (int(p_obj[0]+100), int(p_obj[1])), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
     cv2.circle(img_trans, (int(p_obj[0]), int(p_obj[1])), 50, (0, 0, 255), -1)
 
     cv2.putText(img_retrans, f"{int(p_raw[0])},{int(p_raw[1])}", (int(p_raw[0]+10), int(p_raw[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)

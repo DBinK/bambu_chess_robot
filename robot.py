@@ -67,10 +67,28 @@ if __name__ == "__main__":
 
     robot = BambuRobot(reset=False)
     
-    #robot.hard_reset()
+    # robot.hard_reset()
+
+    
+    # robot.move(0, 0 ,10)  # 1号点
+    # time.sleep(5)
+
+    # robot.move(16, 16 ,10)  # 1号点
+    # time.sleep(5)
+
+    # robot.move(16+224, 16 ,10)  # 2号点
+    # time.sleep(5)
+    
+    # robot.move(16, 16+224 ,10)  # 3号点
+    # time.sleep(5)
+    
+    # robot.move(16+224, 16+224 ,10)  # 4号点
+    # time.sleep(5)
+
+    robot.move(94, 170 ,10)  # 5号点
+    time.sleep(5)
 
     robot.show_chess_board()
-    # robot.move(110+20,44+20,10)
 
     #robot.move_piece(180, 180, 50, 50)
 
