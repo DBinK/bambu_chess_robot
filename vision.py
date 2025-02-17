@@ -1,4 +1,5 @@
 from pupil_apriltags import Detector
+import numpy as np
 import cv2
 
 
@@ -13,6 +14,35 @@ at_detector = Detector(
     debug=0,  # 设置调试模式级别，0表示不启用调试模式
 )
 
+def get_tag_size(corners):
+    # 获取角点坐标的 NumPy 数组
+    x_coords = corners[:, 0]
+    y_coords = corners[:, 1]
+    
+    # 计算宽度和高度
+    width = np.max(x_coords) - np.min(x_coords)
+    height = np.max(y_coords) - np.min(y_coords)
+
+    print(f"Tag size: width={width}, height={height}.")
+
+    return width, height
+
+def filter_by_size(detections, min_size=(20, 20), max_size=(100, 100)):
+    valid_tags = []
+    for detection in detections:
+        tag_id = detection.tag_id  # 假设 tag_id 是一个属性
+        corners = detection.corners  # 假设 corners 是一个 NumPy 数组
+
+        # 计算标签大小
+        width, height = get_tag_size(corners)
+
+        # 根据大小过滤标签
+        if (min_size[0] <= width <= max_size[0]) and (min_size[1] <= height <= max_size[1]):
+            valid_tags.append(detection)
+        else:
+            print(f"Tag {tag_id} is filtered out due to size: width={width}, height={height}.")
+    
+    return valid_tags
 
 def detect(img):
     # 预处理
@@ -23,8 +53,11 @@ def detect(img):
     # 检测标记
     detections = at_detector.detect(img_bin)
 
+    # 过滤
+    detections = filter_by_size(detections)
+
     for detection in detections:
-        print(detection.tag_id)
+        print(f"Tag {detection.tag_id}, corners={detection.corners}")
 
     return detections
 

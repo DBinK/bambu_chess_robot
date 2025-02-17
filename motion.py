@@ -14,8 +14,8 @@ class BambuMotion:
         self.MOTOR_SPEED = 18000  # 默认速度
 
         self.PX_LIMIT = [0, 280]
-        self.PY_LIMIT = [10, 256]
-        self.PZ_LIMIT = [10, 200]
+        self.PY_LIMIT = [0, 256]
+        self.PZ_LIMIT = [0, 200]
 
         self.EXTRA_DELAY = 0.5
 

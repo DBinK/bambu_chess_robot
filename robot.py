@@ -58,9 +58,13 @@ class BambuRobot(BambuMotion):
 if __name__ == "__main__":
 
     robot = BambuRobot(reset=False)
-    # robot = BambuRobot(reset=True)
+    
+    # robot.hard_reset()
 
-    robot.move_piece(180, 180, 50, 50)
+    robot.move(0,0,10)
 
-    #time.sleep(10)
-    #robot.soft_reset(30000)
+    #robot.move_piece(180, 180, 50, 50)
+
+    print("等待10秒后复位")
+    time.sleep(10)
+    robot.soft_reset(30000)
