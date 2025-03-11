@@ -170,16 +170,36 @@ def draw_tags(img, detections):
 def detect_chess(img_trans):
     img_gray = cv2.cvtColor(img_trans, cv2.COLOR_BGR2GRAY)
     _, img_bin = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)  # 二值化
-    cv2.imshow("img_bin", img_bin)
     img_blur = cv2.medianBlur(img_bin, 15)
 
-    print("正在检测棋盘")
+    from point_detector import PointDetector
+
+    # 初始化点检测器
+    point_detector = PointDetector()
+
+    # 点检测结果
+    red_point, green_point = point_detector.detect(img_trans)
+    img_point = point_detector.draw(img_trans)  # 绘制检测结果
+
+    cv2.namedWindow('points', cv2.WINDOW_NORMAL)
+    cv2.imshow('points', img_point)
+
+    #检测轮廓
+    contours, hierarchy = cv2.findContours(img_gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
     circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, dp=1, minDist=20,
                             param1=50, param2=30, minRadius=0, maxRadius=0)
 
     #将所有坐标和半信息取整数
     circles = np.uint(np.around(circles))
-    print(circles) #打印线段信息
+    # print(circles) #打印线段信息
+
+    img_contours = cv2.drawContours(img_trans, contours, -1, (0,255,0), 5)
+    cv2.namedWindow('contours', cv2.WINDOW_NORMAL)
+    cv2.imshow('contours', img_contours) #显示图像
+
+    cv2.namedWindow("img_bin", cv2.WINDOW_NORMAL)
+    cv2.imshow("img_bin", img_bin)
 
     return circles
 
