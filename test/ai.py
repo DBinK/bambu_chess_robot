@@ -130,7 +130,7 @@ def main():
         else:
             pos = player_move(board)  # 处理玩家回合
         
-        board[pos[0]][pos[1]] = current_player  # 落子
+        board[pos[0]][pos[1]] = current_player  # 落子到棋盘数组
         
         if check_win(board, current_player):
             print_board(board)
