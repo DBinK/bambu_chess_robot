@@ -98,10 +98,10 @@ def find_best_move(board, player):
             max_score = score
             best_pos = pos
     
-    # 如果所有位置评估相同，随机选择一个合法位置
+    # 如果所有位置评估相同, 随机选择一个合法位置
     return best_pos if best_pos else random.choice(empty)
 
-def player_move(board, player):
+def player_move(board):
     """处理玩家回合"""
     while True:
         try:
@@ -109,29 +109,28 @@ def player_move(board, player):
             row, col = divmod(move, 3)
             if 0 <= row < 3 and 0 <= col < 3 and board[row][col] == ' ':
                 return (row, col)
-            print("位置无效，请重新输入")
+            print("位置无效, 请重新输入")
         except ValueError:
             print("请输入数字1-9")
 
 def main():
     board = [[' ']*3 for _ in range(3)]
-    players = ['X', 'O']
-    random.shuffle(players)  # 随机先手
+    players = [1, 0]
     current_player = players[0]
     ai_player = players[1]   # AI固定为第二个玩家
     
-    print(f"游戏开始！玩家: {players[0]}，AI: {players[1]}")
+    print(f"游戏开始！玩家: {players[0]}, AI: {players[1]}")
     
     while True:
         print_board(board)
-        
+        print(board)
         if current_player == ai_player:
             print("AI正在思考...")
-            pos = find_best_move(board, ai_player)
+            pos = find_best_move(board, ai_player)  # 寻找最优落子位置
         else:
-            pos = player_move(board, current_player)
+            pos = player_move(board)  # 处理玩家回合
         
-        board[pos[0]][pos[1]] = current_player
+        board[pos[0]][pos[1]] = current_player  # 落子
         
         if check_win(board, current_player):
             print_board(board)
@@ -143,7 +142,7 @@ def main():
             print("平局！")
             break
         
-        current_player = switch_player(current_player)
+        current_player = switch_player(current_player)  # 切换玩家
 
 if __name__ == "__main__":
     main()
