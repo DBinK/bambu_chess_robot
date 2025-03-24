@@ -84,7 +84,7 @@ def tags_to_quad_vertices(detections):
 
     return quad_vertices
 
-def Homo_trans(quad_vertices, width=2240, height=2240):
+def homo_trans(quad_vertices, width=2240, height=2240):
     """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
 
     # 定义图像中的长方形四个顶点（根据你实际值设定）
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     img_draw = draw_tags(img, detections)
 
     # 透视变换
-    H_matrix, H_inv = Homo_trans(quad_vertices)
+    H_matrix, H_inv = homo_trans(quad_vertices)
     img_trans, img_retrans = draw_homo_trans(img, H_matrix)
 
     # 棋子检测

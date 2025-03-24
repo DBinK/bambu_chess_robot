@@ -19,7 +19,7 @@ def chess_detect(img):
     img: 输入图像
     return: 黑色棋子坐标列表，白色棋子坐标列表
     """
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)        # 转换为灰度图像
+    img_gray = img_preprocess(img)        # 转换为灰度图像
     circles = cv2.HoughCircles(img_gray, cv2.HOUGH_GRADIENT, dp=1, minDist=25, param1=50, param2=55)
     if circles is not None:
         circles = np.uint16(np.around(circles))  # 对圆的圆心坐标和半径四舍五入取整
@@ -37,26 +37,23 @@ def chess_detect(img):
         
         if mean_val < 128:  # 黑色棋子
             black_chess_coords.append((i[0], i[1]))
-            cv2.circle(img, (i[0], i[1]), i[2], (0, 0, 255), 2)  # 用红色标记黑色棋子
+            cv2.circle(img, (i[0], i[1]), i[2], (0, 0, 255), 4)  # 用红色标记黑色棋子
         else:  # 白色棋子
             white_chess_coords.append((i[0], i[1]))
-            cv2.circle(img, (i[0], i[1]), i[2], (255, 0, 0), 2)  # 用蓝色标记白色棋子
+            cv2.circle(img, (i[0], i[1]), i[2], (255, 0, 0), 4)  # 用蓝色标记白色棋子
 
     print("Black Chess Coordinates:", black_chess_coords)
     print("White Chess Coordinates:", white_chess_coords)
     return black_chess_coords, white_chess_coords
 
-def chess_borad_detect(img):
-    """
-    棋盘格识别
-    img: 输入图像
-    return: 棋盘格中心点坐标列表
-    """
+
+def detect_borad_corners(img):
     # 转换为灰度图像
     gray = img_preprocess(img)
 
     # 使用Canny边缘检测
     edges = cv2.Canny(gray, 50, 100, apertureSize=3)
+
     # cv2.namedWindow('edges', cv2.WINDOW_NORMAL)
     # cv2.imshow('edges', edges)
 
@@ -76,63 +73,64 @@ def chess_borad_detect(img):
             corners = [tuple(point[0]) for point in approx]
             
             print("Chessboard Corners:", corners)
-            
-            # 在原图像上绘制角点
-            for i in range(len(corners)):
-                cv2.circle(img, corners[i], 5, (0, 255, 0), -1)
-                cv2.line(img, corners[i], corners[(i+1) % 4], (0, 255, 0), 2)
-            
-            # 定义目标正方形的四个角点
-            target_corners = np.float32([[0, 0], [300, 0], [300, 300], [0, 300]])
 
-            # src_corners = np.float32(corners)
-
-            # 确定四个角点坐标顺序)
-            src_corners = np.float32([corners[0], corners[3], corners[2], corners[1]])
-            
-            # 计算透视变换矩阵
-            M = cv2.getPerspectiveTransform(src_corners, target_corners)
-            
-            # 应用透视变换
-            warped_img = cv2.warpPerspective(img, M, (300, 300))
-
-            
-            # 计算正方形区域内每个小格子的边界和中心点
-            width = 100
-            height = 100
-            grid_boundaries = []
-            center_points_warped = []
-            for i in range(3):
-                for j in range(3):
-                    x_start = j * width
-                    y_start = i * height
-                    x_end = (j + 1) * width
-                    y_end = (i + 1) * height
-                    grid_boundaries.append(((x_start, y_start), (x_end, y_end)))
-                    
-                    x_center = int(j * width + width / 2)
-                    y_center = int(i * height + height / 2)
-                    center_points_warped.append((x_center, y_center))
-                    cv2.circle(warped_img, (x_center, y_center), 3, (255, 255, 0), -1)  # 绘制中心点
-
-            cv2.namedWindow('warped_img', cv2.WINDOW_NORMAL)
-            cv2.imshow('warped_img', warped_img)
-            
-            # 将中心点逆变换回原始图像坐标系
-            center_points = []
-            index = 1  # 序号从1开始
-            for point in center_points_warped:
-                x, y = point
-                src_point = np.array([[x, y]], dtype=np.float32)
-                dst_point = cv2.perspectiveTransform(src_point.reshape(-1, 1, 2), np.linalg.inv(M))[0][0]
-                center_points.append((int(dst_point[0]), int(dst_point[1])))
-                cv2.circle(img, (int(dst_point[0]), int(dst_point[1])), 3, (255, 255, 0), -1)  # 绘制中心点
-                cv2.putText(img, str(index), (int(dst_point[0]) - 10, int(dst_point[1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 3.0, (200, 100, 0), 4)  # 标注序号
-                index += 1
-            
-            print("Center Points of Chessboard Grids:", center_points)
-            return center_points
+            return corners
         
+
+def homo_trans(corners, w=300, h=300):
+    """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
+
+    # 定义图像中的长方形四个顶点（根据你实际值设定）
+    image_points = np.array(corners, dtype='float32')
+
+    # 定义目标长方形的四个顶点
+    object_points = np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype='float32')
+
+    # 计算同伦变换矩阵
+    H_matrix , _ = cv2.findHomography(image_points, object_points)
+
+    # 计算反向变换矩阵
+    H_inv = np.linalg.inv(H_matrix)
+
+    return H_matrix, H_inv
+
+
+def trans_coord(point, matrix):
+    """ 输入一个坐标，输出经过矩阵变换后的坐标 """
+    point_homogeneous = np.array([point[0], point[1], 1])
+    transformed_point = matrix @ point_homogeneous
+    return int(transformed_point[0] / transformed_point[2]), \
+           int(transformed_point[1] / transformed_point[2])
+
+
+def get_center_points(H_inv, w=300, h=300):
+    """ 获取棋盘格中心点坐标 """
+    center_points = []
+    raw_points = [(1/6*w, 1/6*h), (3/6*w, 1/6*h), (5/6*w, 1/6*h), \
+                  (1/6*w, 3/6*h), (3/6*w, 3/6*h), (5/6*w, 3/6*h), \
+                  (1/6*w, 5/6*h), (3/6*w, 5/6*h), (5/6*w, 5/6*h)]
+    for point in raw_points:
+        center_points.append(trans_coord(point, H_inv))
+    print("棋盘网格的中心点:", center_points)
+    return center_points
+
+
+def draw_chess_borad(img, corners, center_points):
+    
+    for point in center_points:
+        cv2.circle(img, point, 5, (0, 255, 0), -1)
+    return img
+
+
+def chess_borad_detect(img):
+    corners = detect_borad_corners(img)
+    if corners is not None:
+        H_matrix, H_inv = homo_trans(corners)
+        center_points = get_center_points(H_inv)
+        return center_points
+    else:
+        print("No chessboard detected.")
+
 
 if __name__ == '__main__':
     print("开始测试")
@@ -140,13 +138,13 @@ if __name__ == '__main__':
     img0 = cv2.imread(img_load)
     img_ori = cv2.resize(img0, None, fx=1/8, fy=1/8)
 
-    cv2.namedWindow('chessboard_y1', cv2.WINDOW_NORMAL)
-    cv2.imshow('chessboard_y1', img0)
+    # cv2.namedWindow('chessboard_y1', cv2.WINDOW_NORMAL)
+    # cv2.imshow('chessboard_y1', img0)
     
-    #chess_detect(img0)
+    # chess_detect(img0)
     chess_borad_detect(img0)
 
-    cv2.namedWindow('Detected Circles and Chessboard Corners', cv2.WINDOW_NORMAL)
-    cv2.imshow('Detected Circles and Chessboard Corners', img0)
+    # cv2.namedWindow('Detected Circles and Chessboard Corners', cv2.WINDOW_NORMAL)
+    # cv2.imshow('Detected Circles and Chessboard Corners', img0)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
