@@ -211,7 +211,8 @@ def get_center_points(H_inv, w=300, h=300):
                   (1/6*w, 5/6*h), (3/6*w, 5/6*h), (5/6*w, 5/6*h)]
     for point in raw_points:
         center_points.append(trans_coord(point, H_inv))
-    print("棋盘网格的中心点:", center_points)
+
+    # print("棋盘网格的中心点:", center_points)
     return center_points
 
 def get_point_color(img, center_point, radius):
@@ -237,8 +238,17 @@ def classify_borad_chess_color(img, center_points):
     chess_colors = []
     for point in center_points:
         color = get_point_color(img, point, 20)
+        if color > (200, 200, 200):  # 白色棋子
+            color = 1
+        elif color < (50, 50, 50):  # 黑色棋子
+            color = -1
+        else:  # 其他颜色
+            color = 0
         chess_colors.append(color)
-        print(f"棋子: {center_points.index(point)+1}, 颜色: {color}")
+        # print(f"棋子: {center_points.index(point)+1}, 颜色: {color}")
+
+    print("棋盘格颜色:", chess_colors)
+
     return chess_colors
 
 def draw_chess_borad(img, corners, center_points):
@@ -251,7 +261,7 @@ def draw_chess_borad(img, corners, center_points):
         cv2.line(draw_img, corners[i], corners[(i + 1) % len(corners)], (0, 255, 0), 5)
     for point in corners:
         cv2.circle(draw_img, point, 10, (255, 0, 0), -1)
-        cv2.putText(draw_img, f"p{str(corners.index(point) + 1)}: {point}", point, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 100, 0), 2)
+        cv2.putText(draw_img, f"P{str(corners.index(point) + 1)}: {point}", point, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 100, 0), 2)
     
 
     # 绘制棋盘中心点和号码
