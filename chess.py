@@ -47,13 +47,28 @@ def chess_detect(img):
     return black_chess_coords, white_chess_coords
 
 
+def sort_corners(corners):
+    """ 根据角度对四个角点进行排序，确保顺序为左上角、右上角、右下角、左下角。  """
+    
+    center_x = sum(x for x, y in corners) / 4  # 计算质心
+    center_y = sum(y for x, y in corners) / 4
+
+    def angle_from_center(point):  # 计算每个角点相对于质心的角度
+        return np.arctan2(point[1] - center_y, point[0] - center_x)
+    
+    corners = sorted(corners, key=angle_from_center)  # 根据角度对角点进行排序
+
+    corners = [corners[0], corners[1], corners[2], corners[3]]  # 重新排列顺序为左上角、右上角、右下角、左下角
+    
+    return corners
+
 def detect_borad_corners(img):
-    # 转换为灰度图像
-    gray = img_preprocess(img)
+    """ 从背景识别棋盘角点 """
+    
+    gray = img_preprocess(img)  # 预处理转换为灰度图像
 
     # 使用Canny边缘检测
     edges = cv2.Canny(gray, 50, 100, apertureSize=3)
-
     # cv2.namedWindow('edges', cv2.WINDOW_NORMAL)
     # cv2.imshow('edges', edges)
 
@@ -71,20 +86,7 @@ def detect_borad_corners(img):
         if len(approx) == 4:  # 确保是四边形
             # 获取四个角点的坐标
             corners = [(int(point[0][0]), int(point[0][1])) for point in approx]
-            
-            # 计算质心
-            center_x = sum(x for x, y in corners) / 4
-            center_y = sum(y for x, y in corners) / 4
-            
-            # 计算每个角点相对于质心的角度
-            def angle_from_center(point):
-                return np.arctan2(point[1] - center_y, point[0] - center_x)
-            
-            # 根据角度对角点进行排序
-            corners = sorted(corners, key=angle_from_center)
-            
-            # 重新排列顺序为左上角、右上角、右下角、左下角
-            corners = [corners[0], corners[1], corners[2], corners[3]]
+            corners = sort_corners(corners)
 
             print("棋盘角点:", corners)
 
@@ -94,17 +96,11 @@ def detect_borad_corners(img):
 def homo_trans(corners, w=300, h=300):
     """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
 
-    # 定义图像中的长方形四个顶点（根据你实际值设定）
-    image_points = np.array(corners, dtype='float32')
+    image_points  = np.array(corners, dtype='float32')  # 定义图像中的长方形四个顶点（根据你实际值设定) 
+    object_points = np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype='float32')  # 定义目标长方形的四个顶点
+    H_matrix , _  = cv2.findHomography(image_points, object_points)  # 计算同伦变换矩阵
 
-    # 定义目标长方形的四个顶点
-    object_points = np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype='float32')
-
-    # 计算同伦变换矩阵
-    H_matrix , _ = cv2.findHomography(image_points, object_points)
-
-    # 计算反向变换矩阵
-    H_inv = np.linalg.inv(H_matrix)
+    H_inv = np.linalg.inv(H_matrix)  # 计算反向变换矩阵
 
     return H_matrix, H_inv
 
