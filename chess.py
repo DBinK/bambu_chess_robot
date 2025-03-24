@@ -3,12 +3,6 @@ import numpy as np
 
 from colors import YELLOW_LOWER, YELLOW_UPPER
 
-# 图像预处理
-def img_preprocess(img):
-    blurred_img = cv2.GaussianBlur(img, (7, 7), 0)
-    opened_img = cv2.morphologyEx(blurred_img, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-    gray_img = cv2.cvtColor(opened_img, cv2.COLOR_BGR2GRAY)
-    return gray_img    
 
 
 def remove_background(img, lower, upper):
@@ -20,9 +14,9 @@ def remove_background(img, lower, upper):
 
     mask = cv2.inRange(hsv_img, lower_color, upper_color)  # 创建掩膜
 
-    kernel = np.ones((5, 5), np.uint8)             # 定义结构元素
-    mask = cv2.erode(mask, kernel, iterations=5)   # 收缩操作
-    mask = cv2.dilate(mask, kernel, iterations=5)  # 膨胀操作
+    # kernel = np.ones((5, 5), np.uint8)             # 定义结构元素  
+    # mask = cv2.erode(mask, kernel, iterations=5)   # 收缩操作
+    # mask = cv2.dilate(mask, kernel, iterations=5)  # 膨胀操作
  
     cv2.bitwise_not(mask, mask)  # 翻转掩膜 
 
@@ -162,9 +156,9 @@ def sort_corners(corners):
 def detect_borad_corners(img):
     """ 从背景识别棋盘角点 """
     
-    blurred_img = cv2.GaussianBlur(img, (7, 7), 0)
-    opened_img = cv2.morphologyEx(blurred_img, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-    gray = cv2.cvtColor(opened_img, cv2.COLOR_BGR2GRAY)
+    # blurred_img = cv2.GaussianBlur(img, (7, 7), 0)
+    # opened_img = cv2.morphologyEx(blurred_img, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 50, 100, apertureSize=3)    # 使用Canny边缘检测
     # cv2.namedWindow('edges', cv2.WINDOW_NORMAL)
     # cv2.imshow('edges', edges)
@@ -188,8 +182,8 @@ def detect_borad_corners(img):
             return corners
         
         else:
-            return []
             print("没有找到合适的轮廓")
+            return []
     else:
         print("没有找到合适的轮廓")
         return []
