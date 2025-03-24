@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # 1. 读取图像
-image = cv2.imread('img/chessboard_f1.jpg')
+image = cv2.imread('img/chessboard_y1.jpg')
 
 # 2. 转换颜色空间
 hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
