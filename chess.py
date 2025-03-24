@@ -15,10 +15,7 @@ def img_preprocess(img):
 # 用这两个阈值分离出黑白两色即棋子颜色，再使用 findContours函数 进行轮廓检测，
 # 若轮廓中心在 ROI区域 内则其为所需的棋子，记录其坐标
 def chess_detect(img):
-    """ 棋子识别 
-    img: 输入图像
-    return: 黑色棋子坐标列表，白色棋子坐标列表
-    """
+    """ 棋子识别, 输入图像, 返回 黑色棋子坐标列表，白色棋子坐标列表  """
     img_gray = img_preprocess(img)        # 转换为灰度图像
     circles = cv2.HoughCircles(img_gray, cv2.HOUGH_GRADIENT, dp=1, minDist=25, param1=50, param2=55)
     if circles is not None:
@@ -153,7 +150,7 @@ def chess_borad_detect(img, debug=False):
         H_matrix, H_inv = homo_trans(corners)
         center_points = get_center_points(H_inv)
 
-        if debug: 
+        if debug:  # 调试模式
             draw_img = draw_chess_borad(img, corners, center_points)
             cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
             cv2.imshow('img_borad', draw_img)
