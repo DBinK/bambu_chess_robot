@@ -14,7 +14,7 @@ def img_preprocess(img):
 # 使颜色能够更好的分离，通过所需的黑白双色二值化阈值，
 # 用这两个阈值分离出黑白两色即棋子颜色，再使用 findContours函数 进行轮廓检测，
 # 若轮廓中心在 ROI区域 内则其为所需的棋子，记录其坐标
-def detect_chess_position(img):
+def detect_chess_contours(img):
     # 2. 转换颜色空间
     hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
@@ -31,7 +31,8 @@ def detect_chess_position(img):
     mask = cv2.dilate(mask, kernel, iterations=5)  # 膨胀操作
 
     # 翻转掩膜
-    cv2.bitwise_not(mask, mask)
+    cv2.bitwise_not(mask, mask)  
+
     cv2.namedWindow('Mask', cv2.WINDOW_NORMAL)
     cv2.imshow('Mask', mask)
 
@@ -54,13 +55,14 @@ def detect_chess_position(img):
         # 计算长宽比
         x, y, w, h = cv2.boundingRect(contour)
         aspect_ratio = float(w) / h
-        print(f"长宽比: {aspect_ratio}")
+        # print(f"长宽比: {aspect_ratio}")
         
         # 计算 最小外接圆 与 轮廓 的面积之比
         (x, y), radius = cv2.minEnclosingCircle(contour)
-        # cv2.circle(image, (int(x), int(y)), int(radius), (0, 0, 255), 2) # 绘制最小外接圆
         min_circle_area = np.pi * radius ** 2
         area_ratio = min_circle_area / area
+        # cv2.circle(img, (int(x), int(y)), int(radius), (0, 0, 255), 2) # 绘制最小外接圆
+        # print(f"最小外接圆面积与轮廓面积之比: {area_ratio}")
         
         # 过滤条件
         if (area_ratio < 1.5)  and (0.95 < aspect_ratio < 1.05):
@@ -90,26 +92,43 @@ def classify_chess_color(img, contours):
 
     return black_contours, white_contours
 
-def draw_chess(img, contour):
-    # 计算轮廓的中心点
-    M = cv2.moments(contour)
+def contours_to_positom(contours):
+    contours_positions = []
+    for contour in contours:
+        # 计算轮廓的中心点
+        M = cv2.moments(contour)
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+            contours_positions.append((cX, cY))
+    return contours_positions
 
-    if M["m00"] != 0:
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-        
-        # 获取棋子的颜色（在轮廓的中心点位置）
-        color = img[cY, cX]
-        
-        print(f"棋子位置: ({cX}, {cY}), 颜色: {color}")
+def draw_chess(img, contours, color):
+    img_chess = img.copy()
+    for contour in contours:
+        cv2.drawContours(img_chess, [contour], -1, color, 2)
 
-        # 可视化
-        cv2.drawContours(img, [contour], -1, (0, 255, 0), 2)
-        cv2.circle(img, (cX, cY), 7, (0, 255, 0), -1)
+    chess_positions = contours_to_positom(contours)
+    for chess_position in chess_positions:
+        cv2.circle(img_chess, chess_position, 7, color, -1)
+        cv2.putText(img_chess, f"{chess_position[0], chess_position[1]}", chess_position, cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
-def chess_detect(img):
-    pass
-    
+    return img_chess
+
+def chess_detect(img, debug=False):
+
+    chess_contours = detect_chess_contours(img)  # 获取所有棋子轮廓
+    black_contours, white_contours = classify_chess_color(img, chess_contours)  # 按颜色分类
+    black_positions = contours_to_positom(black_contours)  # 获取黑棋子位置
+    white_positions = contours_to_positom(white_contours)  # 获取白棋子位置
+ 
+    if debug:  # 调试模式
+        img_chess = draw_chess(img, black_contours, (255, 0, 0))
+        img_chess = draw_chess(img_chess, white_contours, (0, 0, 255))
+        cv2.namedWindow("img_chess", cv2.WINDOW_NORMAL)
+        cv2.imshow("img_chess", img_chess)
+
+    return black_positions, white_positions
 
 # def chess_detect(img):
 #     """ 棋子识别, 输入图像, 返回 黑色棋子坐标列表，白色棋子坐标列表  """
@@ -226,16 +245,16 @@ def draw_chess_borad(img, corners, center_points):
 
     # 绘制棋盘顶点和连线    
     for i in range(len(corners)):
-        cv2.line(draw_img, corners[i], corners[(i + 1) % len(corners)], (0, 255, 0), 10)
+        cv2.line(draw_img, corners[i], corners[(i + 1) % len(corners)], (0, 255, 0), 5)
     for point in corners:
         cv2.circle(draw_img, point, 10, (255, 0, 0), -1)
-        cv2.putText(draw_img, str(corners.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 100, 0), 6)
+        cv2.putText(draw_img, str(corners.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0), 3)
     
 
     # 绘制棋盘中心点和号码
     for point in center_points:
         cv2.circle(draw_img, point, 10, (0, 255, 0), -1)
-        cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 0), 6)
+        cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
 
     return draw_img
 
@@ -269,6 +288,7 @@ if __name__ == '__main__':
     
     # chess_detect(img0)
     chess_borad_detect(img_raw, True)
+    chess_detect(img_raw)
 
     # cv2.namedWindow('Detected Circles and Chessboard Corners', cv2.WINDOW_NORMAL)
     # cv2.imshow('Detected Circles and Chessboard Corners', img0)
