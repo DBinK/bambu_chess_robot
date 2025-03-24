@@ -167,6 +167,10 @@ def detect_borad_corners(img):
   
     if contours:  # 找到最大的轮廓
         largest_contour = max(contours, key=cv2.contourArea)
+
+        perimeter = cv2.arcLength(largest_contour, True)
+        if perimeter < img.shape[0]/6 * 4:   # 轮廓太小，可能是噪声，忽略
+            return []
         
         # 对轮廓进行多边形逼近
         epsilon = 0.1 * cv2.arcLength(largest_contour, True)
@@ -250,9 +254,9 @@ def classify_borad_chess_color(img, center_points):
         # 判断颜色
         if color > (200, 200, 200):  # 白色棋子
             color = 1
-        elif color < (50, 50, 50):  # 黑色棋子
+        elif color < (50, 50, 50):   # 黑色棋子
             color = -1
-        else:  # 其他颜色
+        else:                        # 无棋子
             color = 0
 
         chess_colors.append(color)
