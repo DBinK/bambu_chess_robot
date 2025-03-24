@@ -70,9 +70,23 @@ def detect_borad_corners(img):
         
         if len(approx) == 4:  # 确保是四边形
             # 获取四个角点的坐标
-            corners = [tuple(point[0]) for point in approx]
+            corners = [(int(point[0][0]), int(point[0][1])) for point in approx]
             
-            print("Chessboard Corners:", corners)
+            # 计算质心
+            center_x = sum(x for x, y in corners) / 4
+            center_y = sum(y for x, y in corners) / 4
+            
+            # 计算每个角点相对于质心的角度
+            def angle_from_center(point):
+                return np.arctan2(point[1] - center_y, point[0] - center_x)
+            
+            # 根据角度对角点进行排序
+            corners = sorted(corners, key=angle_from_center)
+            
+            # 重新排列顺序为左上角、右上角、右下角、左下角
+            corners = [corners[0], corners[1], corners[2], corners[3]]
+
+            print("棋盘角点:", corners)
 
             return corners
         
@@ -116,33 +130,55 @@ def get_center_points(H_inv, w=300, h=300):
 
 
 def draw_chess_borad(img, corners, center_points):
+    """ 绘制棋盘格调试信息 """
+
+    draw_img = img.copy()
+
+    # 绘制棋盘顶点和连线    
+    for i in range(len(corners)):
+        cv2.line(draw_img, corners[i], corners[(i + 1) % len(corners)], (0, 255, 0), 10)
+    for point in corners:
+        cv2.circle(draw_img, point, 10, (255, 0, 0), -1)
+        cv2.putText(draw_img, str(corners.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 100, 0), 6)
     
+
+    # 绘制棋盘中心点和号码
     for point in center_points:
-        cv2.circle(img, point, 5, (0, 255, 0), -1)
-    return img
+        cv2.circle(draw_img, point, 10, (0, 255, 0), -1)
+        cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 0), 6)
+
+    return draw_img
 
 
-def chess_borad_detect(img):
+def chess_borad_detect(img, debug=False):
+    """ 棋盘格识别总函数 """
     corners = detect_borad_corners(img)
     if corners is not None:
         H_matrix, H_inv = homo_trans(corners)
         center_points = get_center_points(H_inv)
+
+        if debug: 
+            draw_img = draw_chess_borad(img, corners, center_points)
+            cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
+            cv2.imshow('img_borad', draw_img)
+
         return center_points
     else:
         print("No chessboard detected.")
 
 
 if __name__ == '__main__':
+
     print("开始测试")
     img_load = 'img\chessboard_y1.jpg'
-    img0 = cv2.imread(img_load)
-    img_ori = cv2.resize(img0, None, fx=1/8, fy=1/8)
+    # img_load = 'img\chessboard_f2.jpg'
+    img_raw = cv2.imread(img_load)
 
-    # cv2.namedWindow('chessboard_y1', cv2.WINDOW_NORMAL)
-    # cv2.imshow('chessboard_y1', img0)
+    cv2.namedWindow('img_raw', cv2.WINDOW_NORMAL)
+    cv2.imshow('img_raw', img_raw)
     
     # chess_detect(img0)
-    chess_borad_detect(img0)
+    chess_borad_detect(img_raw, True)
 
     # cv2.namedWindow('Detected Circles and Chessboard Corners', cv2.WINDOW_NORMAL)
     # cv2.imshow('Detected Circles and Chessboard Corners', img0)
