@@ -4,6 +4,8 @@ import os
 
 import vision
 
+import chess 
+
 
 # 摄像头参数
 camera_params = {
@@ -11,7 +13,7 @@ camera_params = {
     'image_width': 1280,
     'image_height': 720,
     'auto_exposure': 1,
-    'exposure_time': 200,
+    'exposure_time': 20,
     'fps': 60,
     'gain': 100,
 }
@@ -77,11 +79,14 @@ class USBCamera:
         while True:
             ret, frame = self.cap.read()
             
-            img_pre = vision.pre_process(frame)
-            detections = vision.detect_tags(img_pre)
+            # img_pre = vision.pre_process(frame)
+            # detections = vision.detect_tags(img_pre)
 
-            # 绘制检测结果
-            img_draw = vision.draw_tags(frame, detections)
+            # # 绘制检测结果
+            # img_draw = vision.draw_tags(frame, detections)
+            center_points, chess_colors = chess.chess_borad_detect(frame, True)
+
+            black_coords, white_coords = chess.chess_detect(frame, True)
 
             if ret:
                 # if os.environ.get('DISPLAY') and os.isatty(0):  # 检查有无图形界面
@@ -89,8 +94,8 @@ class USBCamera:
                     cv2.namedWindow("raw", cv2.WINDOW_NORMAL)
                     cv2.imshow("raw", frame)
 
-                    cv2.namedWindow("img_draw", cv2.WINDOW_NORMAL)
-                    cv2.imshow("img_draw", img_draw)
+                    # cv2.namedWindow("img_draw", cv2.WINDOW_NORMAL)
+                    # cv2.imshow("img_draw", img_draw)
                 
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         self.destroy()

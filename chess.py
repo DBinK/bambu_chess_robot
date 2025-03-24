@@ -186,6 +186,10 @@ def detect_borad_corners(img):
             print("棋盘角点:", corners)
 
             return corners
+        
+        else:
+            return []
+            print("没有找到合适的轮廓")
     else:
         print("没有找到合适的轮廓")
         return []
@@ -298,7 +302,7 @@ def chess_borad_detect(img, debug=False):
 
     if len(corners) == 0:
         print("没有检测到棋盘")
-        return []
+        return [], []
     
     H_matrix, H_inv = homo_trans(corners)     # 计算透视变换矩阵
     center_points = get_center_points(H_inv)  # 获取棋盘格中心点
@@ -315,8 +319,8 @@ def chess_borad_detect(img, debug=False):
 if __name__ == '__main__':
 
     print("开始测试")
-    img_load = 'img\chessboard_y1.jpg'
-    # img_load = 'img\chessboard_f2.jpg'
+    # img_load = 'img\chessboard_y1.jpg'
+    img_load = 'img\chessboard_f2.jpg'
     img_raw = cv2.imread(img_load)
 
     cv2.namedWindow('img_raw', cv2.WINDOW_NORMAL)
