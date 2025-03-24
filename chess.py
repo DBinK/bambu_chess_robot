@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+from colors import YELLOW_LOWER, YELLOW_UPPER
+
 # 图像预处理
 def img_preprocess(img):
     blurred_img = cv2.GaussianBlur(img, (7, 7), 0)
@@ -9,44 +11,39 @@ def img_preprocess(img):
     return gray_img    
 
 
-# 棋子识别
-# 在棋盘格外划定 ROI区域 并对图像进行色彩空间转换，由 BGR 转为 HSV 图像，
-# 使颜色能够更好的分离，通过所需的黑白双色二值化阈值，
-# 用这两个阈值分离出黑白两色即棋子颜色，再使用 findContours函数 进行轮廓检测，
-# 若轮廓中心在 ROI区域 内则其为所需的棋子，记录其坐标
-def detect_chess_contours(img):
-    # 2. 转换颜色空间
-    hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+def remove_background(img, lower, upper):
+    
+    hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)  # 转换为HSV格式
+    lower_color = np.array(lower)  # 颜色范围下限
+    upper_color = np.array(upper)  # 颜色颜色上限
 
-    # 3. 设置颜色范围（以黄色为例）
-    lower_yellow = np.array([20, 100, 100])  # 黄色下限
-    upper_yellow = np.array([30, 255, 255])  # 黄色上限
+    mask = cv2.inRange(hsv_image, lower_color, upper_color)  # 创建掩膜
 
-    # 4. 创建掩膜
-    mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
-
-    # 收缩膨胀掩膜
-    kernel = np.ones((5, 5), np.uint8)  # 定义结构元素
-    mask = cv2.erode(mask, kernel, iterations=5)  # 收缩操作
+    kernel = np.ones((5, 5), np.uint8)             # 定义结构元素
+    mask = cv2.erode(mask, kernel, iterations=5)   # 收缩操作
     mask = cv2.dilate(mask, kernel, iterations=5)  # 膨胀操作
+ 
+    cv2.bitwise_not(mask, mask)  # 翻转掩膜 
 
-    # 翻转掩膜
-    cv2.bitwise_not(mask, mask)  
-
-    cv2.namedWindow('Mask', cv2.WINDOW_NORMAL)
+    cv2.namedWindow('Mask', cv2.WINDOW_NORMAL)   # 显示掩膜
     cv2.imshow('Mask', mask)
 
-    # 5. 查找轮廓
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    return mask
 
-    # 6. 提取位置和颜色
+def detect_chess_contours(img):
+    """ 从背景识别棋子轮廓 """
+
+    mask = remove_background(img, YELLOW_LOWER, YELLOW_UPPER)
+  
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # 查找轮廓
+    
     filtered_contours = []
-    for contour in contours:
+    for contour in contours:  # 提取位置和颜色
 
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
 
-        if perimeter < (50 * 4): # 过滤小的轮廓 
+        if perimeter < (50 * 4):  # 过滤小的轮廓 
             continue
 
         # circularity = (4 * np.pi * area) / (perimeter * perimeter)
@@ -70,8 +67,8 @@ def detect_chess_contours(img):
 
     return filtered_contours      
 
-def classify_chess_color(img, contours):
-     # 初始化两个列表
+def classify_background_chess_color(img, contours):
+    """ 根据轮廓颜色分类棋子 """
     black_contours = []
     white_contours = []
 
@@ -86,24 +83,23 @@ def classify_chess_color(img, contours):
             black_contours.append(contour)
         elif mean_val[0] > 150 and mean_val[1] > 150 and mean_val[2] > 150:  # 接近白色
             white_contours.append(contour)
-    
-    print(f"黑色棋子数量: {len(black_contours)}")
-    print(f"白色棋子数量: {len(white_contours)}")
 
     return black_contours, white_contours
 
 def contours_to_positom(contours):
+    """ 将轮廓转换为棋子位置 """
     contours_positions = []
     for contour in contours:
-        # 计算轮廓的中心点
-        M = cv2.moments(contour)
+        M = cv2.moments(contour)  # 计算轮廓的中心点
         if M["m00"] != 0:
             cX = int(M["m10"] / M["m00"])
             cY = int(M["m01"] / M["m00"])
             contours_positions.append((cX, cY))
+
     return contours_positions
 
 def draw_chess(img, contours, color):
+    """ 在图像上绘制棋子轮廓 """
     img_chess = img.copy()
     for contour in contours:
         cv2.drawContours(img_chess, [contour], -1, color, 2)
@@ -116,11 +112,19 @@ def draw_chess(img, contours, color):
     return img_chess
 
 def chess_detect(img, debug=False):
+    """ 从背景识别棋子位置 """
 
     chess_contours = detect_chess_contours(img)  # 获取所有棋子轮廓
-    black_contours, white_contours = classify_chess_color(img, chess_contours)  # 按颜色分类
-    black_positions = contours_to_positom(black_contours)  # 获取黑棋子位置
-    white_positions = contours_to_positom(white_contours)  # 获取白棋子位置
+
+    if len(chess_contours) == 0:  # 如果没有找到任何棋子轮廓，则返回空列表
+        return [], []
+    
+    black_contours, white_contours = classify_background_chess_color(img, chess_contours)  # 按颜色分类
+    black_coords = contours_to_positom(black_contours)  # 获取黑棋子位置
+    white_coords = contours_to_positom(white_contours)  # 获取白棋子位置
+
+    print(f"黑色棋子数量: {len(black_coords)}, 位置: {black_coords}")
+    print(f"白色棋子数量: {len(white_coords)}, 位置: {white_coords}")
  
     if debug:  # 调试模式
         img_chess = draw_chess(img, black_contours, (255, 0, 0))
@@ -128,36 +132,10 @@ def chess_detect(img, debug=False):
         cv2.namedWindow("img_chess", cv2.WINDOW_NORMAL)
         cv2.imshow("img_chess", img_chess)
 
-    return black_positions, white_positions
+    return black_coords, white_coords
 
-# def chess_detect(img):
-#     """ 棋子识别, 输入图像, 返回 黑色棋子坐标列表，白色棋子坐标列表  """
-#     img_gray = img_preprocess(img)        # 转换为灰度图像
-#     circles = cv2.HoughCircles(img_gray, cv2.HOUGH_GRADIENT, dp=1, minDist=25, param1=50, param2=55)
-#     if circles is not None:
-#         circles = np.uint16(np.around(circles))  # 对圆的圆心坐标和半径四舍五入取整
-    
-#     black_chess_coords = []
-#     white_chess_coords = []
 
-#     for i in circles[0, :]:
-#         # 提取圆形区域
-#         mask = np.zeros_like(img_gray)
-#         cv2.circle(mask, (i[0], i[1]), i[2], (255, 255, 255), -1)
-        
-#         # 计算圆形区域的平均灰度值
-#         mean_val = cv2.mean(img_gray, mask=mask)[0]
-        
-#         if mean_val < 128:  # 黑色棋子
-#             black_chess_coords.append((i[0], i[1]))
-#             cv2.circle(img, (i[0], i[1]), i[2], (0, 0, 255), 4)  # 用红色标记黑色棋子
-#         else:  # 白色棋子
-#             white_chess_coords.append((i[0], i[1]))
-#             cv2.circle(img, (i[0], i[1]), i[2], (255, 0, 0), 4)  # 用蓝色标记白色棋子
-
-#     print("Black Chess Coordinates:", black_chess_coords)
-#     print("White Chess Coordinates:", white_chess_coords)
-#     return black_chess_coords, white_chess_coords
+##############################################################################################
 
 
 def sort_corners(corners):
@@ -179,17 +157,13 @@ def detect_borad_corners(img):
     """ 从背景识别棋盘角点 """
     
     gray = img_preprocess(img)  # 预处理转换为灰度图像
-
-    # 使用Canny边缘检测
-    edges = cv2.Canny(gray, 50, 100, apertureSize=3)
+    edges = cv2.Canny(gray, 50, 100, apertureSize=3)  # 使用Canny边缘检测
     # cv2.namedWindow('edges', cv2.WINDOW_NORMAL)
     # cv2.imshow('edges', edges)
 
-    # 查找轮廓
-    contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # 找到最大的轮廓
-    if contours:
+    contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)   # 查找轮廓
+  
+    if contours:  # 找到最大的轮廓
         largest_contour = max(contours, key=cv2.contourArea)
         
         # 对轮廓进行多边形逼近
@@ -204,6 +178,9 @@ def detect_borad_corners(img):
             print("棋盘角点:", corners)
 
             return corners
+    else:
+        print("没有找到合适的轮廓")
+        return []
         
 
 def homo_trans(corners, w=300, h=300):
@@ -237,6 +214,32 @@ def get_center_points(H_inv, w=300, h=300):
     print("棋盘网格的中心点:", center_points)
     return center_points
 
+def get_point_color(img, center_point, radius):
+    """ 获取指定点周围区域的平均颜色 """
+
+    x, y = center_point     # 定义周围区域的坐标
+    x1 = max(0, x - radius)
+    x2 = min(img.shape[1], x + radius)
+    y1 = max(0, y - radius)
+    y2 = min(img.shape[0], y + radius)
+    
+    region = img[y1:y2, x1:x2]            # 获取周围区域并计算平均颜色
+    average_color = cv2.mean(region)[:3]  # 获取 BGR 平均值并忽略 alpha 通道
+ 
+    average_color = tuple(int(c) for c in average_color)  # 对平均颜色进行取整
+
+    # cv2.circle(img, center_point, radius, (255, 0, 0), 2)  # 检查指定点采样半径用
+
+    return average_color
+
+def classify_borad_chess_color(img, center_points):
+    """ 获取棋盘格上棋子的颜色 """
+    chess_colors = []
+    for point in center_points:
+        color = get_point_color(img, point, 20)
+        chess_colors.append(color)
+        print(f"棋子: {center_points.index(point)+1}, 颜色: {color}")
+    return chess_colors
 
 def draw_chess_borad(img, corners, center_points):
     """ 绘制棋盘格调试信息 """
@@ -248,32 +251,35 @@ def draw_chess_borad(img, corners, center_points):
         cv2.line(draw_img, corners[i], corners[(i + 1) % len(corners)], (0, 255, 0), 5)
     for point in corners:
         cv2.circle(draw_img, point, 10, (255, 0, 0), -1)
-        cv2.putText(draw_img, str(corners.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0), 3)
+        cv2.putText(draw_img, f"p{str(corners.index(point) + 1)}: {point}", point, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 100, 0), 2)
     
 
     # 绘制棋盘中心点和号码
     for point in center_points:
         cv2.circle(draw_img, point, 10, (0, 255, 0), -1)
-        cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+        cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
 
     return draw_img
 
 
 def chess_borad_detect(img, debug=False):
     """ 棋盘格识别总函数 """
-    corners = detect_borad_corners(img)
-    if corners is not None:
-        H_matrix, H_inv = homo_trans(corners)
-        center_points = get_center_points(H_inv)
 
-        if debug:  # 调试模式
-            draw_img = draw_chess_borad(img, corners, center_points)
-            cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
-            cv2.imshow('img_borad', draw_img)
+    corners = detect_borad_corners(img)  # 获取棋盘格角点
 
-        return center_points
-    else:
-        print("No chessboard detected.")
+    if len(corners) == 0:
+        print("没有检测到棋盘")
+        return []
+    
+    H_matrix, H_inv = homo_trans(corners)     # 计算透视变换矩阵
+    center_points = get_center_points(H_inv)  # 获取棋盘格中心点
+
+    if debug:  # 调试模式
+        draw_img = draw_chess_borad(img, corners, center_points)
+        cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
+        cv2.imshow('img_borad', draw_img)
+
+    return center_points
 
 
 if __name__ == '__main__':
@@ -286,9 +292,10 @@ if __name__ == '__main__':
     cv2.namedWindow('img_raw', cv2.WINDOW_NORMAL)
     cv2.imshow('img_raw', img_raw)
     
-    # chess_detect(img0)
-    chess_borad_detect(img_raw, True)
-    chess_detect(img_raw)
+    center_points = chess_borad_detect(img_raw, True)
+    chess_colors = classify_borad_chess_color(img_raw, center_points)
+
+    black_coords, white_coords = chess_detect(img_raw, True)
 
     # cv2.namedWindow('Detected Circles and Chessboard Corners', cv2.WINDOW_NORMAL)
     # cv2.imshow('Detected Circles and Chessboard Corners', img0)
