@@ -10,8 +10,8 @@ import chess
 # 摄像头参数
 camera_params = {
     'camera_id': 0,
-    'image_width': 1280,
-    'image_height': 720,
+    'image_width': 1920,
+    'image_height': 1080,
     'auto_exposure': 1,
     'exposure_time': 10000,
     'fps': 60,

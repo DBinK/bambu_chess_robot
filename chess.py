@@ -183,32 +183,34 @@ def detect_borad_corners(img):
 
     contours, hierarchy = cv2.findContours(mask_yellow, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)   # 查找轮廓
   
-    if contours:  # 找到最大的轮廓
-        largest_contour = max(contours, key=cv2.contourArea)
+    quadrilateral_contours = []
 
-        perimeter = cv2.arcLength(largest_contour, True)
-        if perimeter < img.shape[0]/6 * 4:   # 轮廓太小，可能是噪声，忽略
-            return []
+    for contour in contours:
+        perimeter = cv2.arcLength(contour, True)
+        if perimeter < img.shape[0]/20 * 4:   # 轮廓太小，可能是噪声，忽略
+            continue
         
         # 对轮廓进行多边形逼近
-        epsilon = 0.1 * cv2.arcLength(largest_contour, True)
-        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+        epsilon = 0.1 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, epsilon, True)
         
         if len(approx) == 4:  # 确保是四边形
-            # 获取四个角点的坐标
-            corners = [(int(point[0][0]), int(point[0][1])) for point in approx]
-            corners = sort_corners(corners)
+            quadrilateral_contours.append(contour)
 
-            print("棋盘角点:", corners)
-
-            return corners
-        
-        else:
-            print("没有找到合适的轮廓")
-            return []
-    else:
-        print("没有找到合适的轮廓")
+    if not quadrilateral_contours:
+        print("没有找到四边形轮廓")
         return []
+
+    # 找到面积最大的四边形轮廓
+    largest_contour = max(quadrilateral_contours, key=cv2.contourArea)
+
+    # 获取四个角点的坐标
+    corners = [(int(point[0][0]), int(point[0][1])) for point in largest_contour]
+    corners = sort_corners(corners)
+
+    print("棋盘角点:", corners)
+
+    return corners
         
 
 def homo_trans(corners, w=300, h=300):
