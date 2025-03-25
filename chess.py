@@ -4,7 +4,6 @@ import numpy as np
 from colors import YELLOW_LOWER, YELLOW_UPPER
 
 
-
 def remove_background(img, lower, upper):
     
     hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)  # 转换为HSV格式
@@ -24,6 +23,7 @@ def remove_background(img, lower, upper):
     cv2.imshow('Mask', mask)
 
     return mask
+
 
 def detect_chess_contours(img):
     """ 从背景识别棋子轮廓 """
@@ -62,6 +62,7 @@ def detect_chess_contours(img):
 
     return filtered_contours      
 
+
 def classify_background_chess_color(img, contours):
     """ 根据轮廓颜色分类棋子 """
 
@@ -82,6 +83,7 @@ def classify_background_chess_color(img, contours):
 
     return black_contours, white_contours
 
+
 def contours_to_positom(contours):
     """ 将轮廓转换为棋子位置 """
 
@@ -95,6 +97,7 @@ def contours_to_positom(contours):
             contours_positions.append((cX, cY))
 
     return contours_positions
+
 
 def draw_chess(img, contours, color):
     """ 在图像上绘制棋子轮廓 """
@@ -111,12 +114,18 @@ def draw_chess(img, contours, color):
 
     return img_chess
 
+
 def chess_detect(img, debug=False):
     """ 从背景识别棋子位置 """
 
     chess_contours = detect_chess_contours(img)  # 获取所有棋子轮廓
 
     if len(chess_contours) == 0:  # 如果没有找到任何棋子轮廓，则返回空列表
+       
+        if debug:  # 调试模式
+            cv2.namedWindow("img_chess", cv2.WINDOW_NORMAL)
+            cv2.imshow("img_chess", img)
+
         return [], []
     
     black_contours, white_contours = classify_background_chess_color(img, chess_contours)  # 按颜色分类
@@ -152,6 +161,7 @@ def sort_corners(corners):
     corners = [corners[0], corners[1], corners[2], corners[3]]  # 重新排列顺序为左上角、右上角、右下角、左下角
     
     return corners
+
 
 def detect_borad_corners(img):
     """ 从背景识别棋盘角点 """
@@ -225,6 +235,7 @@ def get_center_points(H_inv, w=300, h=300):
     # print("棋盘网格的中心点:", center_points)
     return center_points
 
+
 def get_point_color(img, center_point, radius):
     """ 获取指定点周围区域的平均颜色 """
 
@@ -266,9 +277,10 @@ def classify_borad_chess_color(img, center_points):
 
     return chess_colors
 
+
 def draw_chess_borad(img, corners, center_points, chess_colors):
     """ 绘制棋盘格调试信息 """
-
+    
     draw_img = img.copy()
 
     for i in range(len(corners)):  # 绘制棋盘顶点和连线   
@@ -300,6 +312,11 @@ def chess_borad_detect(img, debug=False):
 
     if len(corners) == 0:
         print("没有检测到棋盘")
+        
+        if debug:  # 调试模式
+            cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
+            cv2.imshow('img_borad', img)  # 绘制空白图像
+
         return [], []
     
     H_matrix, H_inv = homo_trans(corners)     # 计算透视变换矩阵
