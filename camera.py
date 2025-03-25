@@ -13,9 +13,11 @@ camera_params = {
     'image_width': 1280,
     'image_height': 720,
     'auto_exposure': 1,
-    'exposure_time': 20,
+    'exposure_time': 1500,
     'fps': 60,
-    'gain': 100,
+    'gain': 200,
+    'auto_wb': 0,
+    'wb_temperature': 8000,
 }
 
 def time_diff(last_time=[None]):
@@ -41,6 +43,8 @@ class USBCamera:
         self.auto_exposure = camera_params.get('auto_exposure', 1)
         self.exposure_time = camera_params.get('exposure_time', 100)
         self.gain = camera_params.get('gain', 0)
+        self.auto_wb = camera_params.get('auto_wb', 0)
+        self.wb_temperature = camera_params.get('wb_temperature', 5000)
 
         # 初始化相机
         print(f'开始初始化 {self.camera_id} 号相机相机...')
@@ -61,6 +65,9 @@ class USBCamera:
         self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, self.auto_exposure)
         self.cap.set(cv2.CAP_PROP_EXPOSURE, self.exposure_time)
         self.cap.set(cv2.CAP_PROP_GAIN, self.gain)
+        self.cap.set(cv2.CAP_PROP_AUTO_WB, self.auto_wb)  # 关闭自动白平衡
+        self.cap.set(cv2.CAP_PROP_WB_TEMPERATURE, self.wb_temperature)  # 设置白平衡色温
+
 
         print(f"设置的相机: {self.camera_id} 号相机")
         print(f"设置的分辨率: {self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)} x {self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}")
