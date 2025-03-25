@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from colors import YELLOW_LOWER, YELLOW_UPPER
+from colors import GREEN_LOWER, GREEN_UPPER, YELLOW_LOWER, YELLOW_UPPER
 
 
 def remove_background(img, lower, upper):
@@ -19,17 +19,20 @@ def remove_background(img, lower, upper):
  
     cv2.bitwise_not(mask, mask)  # 翻转掩膜 
 
-    cv2.namedWindow('Mask', cv2.WINDOW_NORMAL)   # 显示掩膜
-    cv2.imshow('Mask', mask)
-
     return mask
 
 
 def detect_chess_contours(img):
     """ 从背景识别棋子轮廓 """
 
-    mask = remove_background(img, YELLOW_LOWER, YELLOW_UPPER)  # 移除黄色背景
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # 查找轮廓
+    mask_yellow = remove_background(img, YELLOW_LOWER, YELLOW_UPPER)  # 移除黄色背景
+    # mask_green  = remove_background(img,  GREEN_LOWER,  GREEN_UPPER)
+    # mask = mask_yellow & mask_green
+
+    cv2.namedWindow('Mask', cv2.WINDOW_NORMAL)   # 显示掩膜
+    cv2.imshow('Mask', mask_yellow)
+
+    contours, _ = cv2.findContours(mask_yellow, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # 查找轮廓
     
     filtered_contours = []
 
@@ -168,12 +171,17 @@ def detect_borad_corners(img):
     
     # blurred_img = cv2.GaussianBlur(img, (7, 7), 0)
     # opened_img = cv2.morphologyEx(blurred_img, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 50, 100, apertureSize=3)    # 使用Canny边缘检测
+    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # edges = cv2.Canny(gray, 50, 100, apertureSize=3)    # 使用Canny边缘检测
     # cv2.namedWindow('edges', cv2.WINDOW_NORMAL)
     # cv2.imshow('edges', edges)
 
-    contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)   # 查找轮廓
+    
+    mask_yellow = remove_background(img, YELLOW_LOWER, YELLOW_UPPER)  # 移除黄色背景
+    # mask_green  = remove_background(img,  GREEN_LOWER,  GREEN_UPPER)
+    # mask = mask_yellow & mask_green
+
+    contours, hierarchy = cv2.findContours(mask_yellow, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)   # 查找轮廓
   
     if contours:  # 找到最大的轮廓
         largest_contour = max(contours, key=cv2.contourArea)

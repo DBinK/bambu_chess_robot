@@ -13,11 +13,11 @@ camera_params = {
     'image_width': 1280,
     'image_height': 720,
     'auto_exposure': 1,
-    'exposure_time': 1500,
+    'exposure_time': 10000,
     'fps': 60,
-    'gain': 200,
+    'gain': 100,
     'auto_wb': 0,
-    'wb_temperature': 8000,
+    'wb_temperature': 5000,
 }
 
 def time_diff(last_time=[None]):
