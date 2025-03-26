@@ -91,18 +91,17 @@ class USBCamera:
         while True:
             ret, frame = self.cap.read()
             
-            img_pre = vision.pre_process(frame)
-            detections = vision.detect_tags(img_pre)
+            img_pre = vision.pre_process(frame)       # 预处理
+            detections = vision.detect_tags(img_pre)  # 检测标记
 
-            quad_vertices = vision.tags_to_quad_vertices(detections)
+            quad_vertices = vision.tags_to_quad_vertices(detections)  # 获取四个角点
 
             if quad_vertices is not None and len(quad_vertices) >= 4:
-                # 绘制检测结果
-                img_tags = vision.draw_tags(frame, detections)
 
-                # 透视变换
-                H_matrix, H_inv = vision.homo_trans(quad_vertices)
-                img_trans, img_retrans = vision.draw_homo_trans(img_tags, H_matrix)
+                img_tags = vision.draw_tags(frame, detections)      # 绘制tag检测结果
+
+                H_matrix, H_inv = vision.homo_trans(quad_vertices)  # 透视变换
+                img_trans, img_retrans = vision.draw_homo_trans(img_tags, H_matrix)  # 绘制透视变换
 
             else:
                 img_tags = frame
@@ -111,15 +110,22 @@ class USBCamera:
 
             if img_trans is not None:
 
-                center_points, chess_colors = chess.chess_borad_detect(img_trans, True)
+                corners, center_points, chess_colors = chess.chess_borad_detect(img_trans)                  # 获取棋盘格信息
+                black_coords, white_coords, black_contours, white_contours = chess.chess_detect(img_trans)  # 获取棋子位置
 
-                black_coords, white_coords = chess.chess_detect(img_trans, True)
+                if corners is not None:  # 画出棋盘格
+                    img_chess = chess.draw_chess_borad(img_trans, corners, center_points, chess_colors)
+                    img_chess = chess.draw_chess(img_chess, black_contours, (255, 100, 0))
+                    img_chess = chess.draw_chess(img_chess, white_contours, (0, 100, 255))
 
             if ret:
                 # if os.environ.get('DISPLAY') and os.isatty(0):  # 检查有无图形界面
                 if os.isatty(0):
                     cv2.namedWindow("raw", cv2.WINDOW_NORMAL)
                     cv2.imshow("raw", frame)
+
+                    cv2.namedWindow("img_chess", cv2.WINDOW_NORMAL)
+                    cv2.imshow("img_chess", img_chess)
 
                     # cv2.namedWindow("img_tags", cv2.WINDOW_NORMAL)
                     # cv2.imshow("img_tags", img_tags)

@@ -129,7 +129,7 @@ def chess_detect(img, debug=False):
             cv2.namedWindow("img_chess", cv2.WINDOW_NORMAL)
             cv2.imshow("img_chess", img)
 
-        return [], []
+        return [], [], [], []
     
     black_contours, white_contours = classify_background_chess_color(img, chess_contours)  # 按颜色分类
     black_coords = contours_to_positom(black_contours)  # 获取黑棋子位置
@@ -144,7 +144,7 @@ def chess_detect(img, debug=False):
         cv2.namedWindow("img_chess", cv2.WINDOW_NORMAL)
         cv2.imshow("img_chess", img_chess)
 
-    return black_coords, white_coords
+    return black_coords, white_coords, black_contours, white_contours
 
 
 ##############################################################################################
@@ -323,13 +323,14 @@ def draw_chess_borad(img, corners, center_points, chess_colors):
         for point in center_points:    # 绘制棋盘中心点和号码
             
             if chess_colors[center_points.index(point)] == 1:       # 白色棋子
-                cv2.circle(draw_img, point, 4, (150, 150, 150), -1)
-                cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                # print(f"棋子: {center_points.index(point)+1}, 颜色: 白色, 位置:{point}")
+                cv2.circle(draw_img, point, 16, (0, 100, 255), -1)
+                cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
             
             elif chess_colors[center_points.index(point)] == -1:    # 黑色棋子
-                print(f"棋子: {center_points.index(point)+1}, 颜色: 黑色, 位置:{point}")
-                cv2.circle(draw_img, point, 4, (150, 150, 150), -1)
-                cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                # print(f"棋子: {center_points.index(point)+1}, 颜色: 黑色, 位置:{point}")
+                cv2.circle(draw_img, point, 16, (255, 100, 0), -1)
+                cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
 
             else:
                 cv2.circle(draw_img, point, 3, (0, 200, 0), -1)     # 无棋子
@@ -350,13 +351,13 @@ def chess_borad_detect(img, debug=False):
             cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
             cv2.imshow('img_borad', img)  # 绘制空白图像
 
-        return [], []
+        return [], [], []
     
     H_matrix, H_inv = homo_trans(corners)     # 计算透视变换矩阵
 
     if H_matrix is None or H_inv is None:
         print("无法计算透视变换矩阵或其逆矩阵")
-        return [], []
+        return [], [], []
 
     center_points = get_center_points(H_inv)  # 获取棋盘格中心点
     chess_colors = classify_borad_chess_color(img, center_points)
@@ -366,7 +367,7 @@ def chess_borad_detect(img, debug=False):
         cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
         cv2.imshow('img_borad', draw_img)
 
-    return center_points, chess_colors
+    return corners, center_points, chess_colors
 
 
 if __name__ == '__main__':
@@ -382,7 +383,7 @@ if __name__ == '__main__':
     
     center_points, chess_colors = chess_borad_detect(img_raw, True)
 
-    black_coords, white_coords = chess_detect(img_raw, True)
+    black_coords, white_coords, black_contours, white_contours = chess_detect(img_raw, True)
 
     # cv2.namedWindow('Detected Circles and Chessboard Corners', cv2.WINDOW_NORMAL)
     # cv2.imshow('Detected Circles and Chessboard Corners', img0)
