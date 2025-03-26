@@ -119,8 +119,8 @@ class USBCamera:
                     img_chess = chess.draw_chess(img_chess, white_contours, (0, 100, 255))
 
             if ret:
-                # if os.environ.get('DISPLAY') and os.isatty(0):  # 检查有无图形界面
-                if os.isatty(0):
+                if os.environ.get('DISPLAY') and os.isatty(0):  # 检查有无图形界面
+                # if os.isatty(0):
                     cv2.namedWindow("raw", cv2.WINDOW_NORMAL)
                     cv2.imshow("raw", frame)
 

@@ -49,7 +49,7 @@ def detect_tags(img):
 
             # 根据大小过滤标签
             if (min_size[0] <= width <= max_size[0]) and (min_size[1] <= height <= max_size[1]):
-                print(f"Tag {tag_id} , center={(x, y)}")
+                #  print(f"Tag {tag_id} , center={(x, y)}")
                 valid_tags.append(detection)
             else:
                 print(f"Tag {tag_id} is filtered out due to size: width={width}, height={height}.")

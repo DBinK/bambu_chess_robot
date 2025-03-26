@@ -250,7 +250,7 @@ def get_center_points(H_inv, w=300, h=300):
     
     for point in raw_points:
         transformed_point = trans_coord(point, H_inv)
-        print(f"原始点: {point}, 变换后点: {transformed_point}")
+        #  print(f"原始点: {point}, 变换后点: {transformed_point}")
         center_points.append(transformed_point)
 
     print("棋盘网格的中心点:", center_points)
