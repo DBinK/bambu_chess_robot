@@ -216,11 +216,20 @@ def detect_borad_corners(img):
 def homo_trans(corners, w=300, h=300):
     """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
 
-    image_points  = np.array(corners, dtype='float32')  # 定义图像中的长方形四个顶点（根据你实际值设定) 
+    image_points = np.array(corners, dtype='float32')  # 定义图像中的长方形四个顶点（根据你实际值设定)
     object_points = np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype='float32')  # 定义目标长方形的四个顶点
-    H_matrix , _  = cv2.findHomography(image_points, object_points)  # 计算同伦变换矩阵
 
-    H_inv = np.linalg.inv(H_matrix)  # 计算反向变换矩阵
+    H_matrix, _ = cv2.findHomography(image_points, object_points)  # 计算同伦变换矩阵
+
+    if H_matrix is None:
+        print("无法计算透视变换矩阵，H_matrix 为 None")
+        return None, None
+
+    try:
+        H_inv = np.linalg.inv(H_matrix)  # 计算反向变换矩阵
+    except np.linalg.LinAlgError:
+        print("无法计算逆矩阵，H_matrix 是奇异矩阵")
+        return None, None
 
     return H_matrix, H_inv
 
@@ -293,24 +302,27 @@ def draw_chess_borad(img, corners, center_points, chess_colors):
     
     draw_img = img.copy()
 
-    for i in range(len(corners)):  # 绘制棋盘顶点和连线   
-        cv2.line(draw_img, corners[i], corners[(i + 1) % len(corners)], (0, 255, 0), 5)
-    for point in corners:
-        cv2.circle(draw_img, point, 10, (255, 0, 0), -1)
-        cv2.putText(draw_img, f" P{str(corners.index(point) + 1)}: {point}", point, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 100, 0), 1)
+    if corners:
+        for i in range(len(corners)):  # 绘制棋盘顶点和连线   
+            cv2.line(draw_img, corners[i], corners[(i + 1) % len(corners)], (0, 255, 0), 5)
+        for point in corners:
+            cv2.circle(draw_img, point, 10, (255, 0, 0), -1)
+            cv2.putText(draw_img, f" P{str(corners.index(point) + 1)}: {point}", point, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 100, 0), 1)
     
-    for point in center_points:    # 绘制棋盘中心点和号码
-        
-        if chess_colors[center_points.index(point)] == 1:       # 白色棋子
-            cv2.circle(draw_img, point, 4, (150, 150, 150), -1)
-            cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-        
-        elif chess_colors[center_points.index(point)] == -1:    # 黑色棋子
-            cv2.circle(draw_img, point, 4, (150, 150, 150), -1)
-            cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    if len(center_points) > 0 and len(chess_colors) > 0:
+        for point in center_points:    # 绘制棋盘中心点和号码
+            
+            if chess_colors[center_points.index(point)] == 1:       # 白色棋子
+                cv2.circle(draw_img, point, 4, (150, 150, 150), -1)
+                cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            
+            elif chess_colors[center_points.index(point)] == -1:    # 黑色棋子
+                print(f"棋子: {center_points.index(point)+1}, 颜色: 黑色, 位置:{point}")
+                cv2.circle(draw_img, point, 4, (150, 150, 150), -1)
+                cv2.putText(draw_img, str(center_points.index(point) + 1), point, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-        else:
-            cv2.circle(draw_img, point, 3, (0, 200, 0), -1)     # 无棋子
+            else:
+                cv2.circle(draw_img, point, 3, (0, 200, 0), -1)     # 无棋子
 
     return draw_img
 
@@ -330,6 +342,11 @@ def chess_borad_detect(img, debug=False):
         return [], []
     
     H_matrix, H_inv = homo_trans(corners)     # 计算透视变换矩阵
+
+    if H_matrix is None or H_inv is None:
+        print("无法计算透视变换矩阵或其逆矩阵")
+        return [], []
+
     center_points = get_center_points(H_inv)  # 获取棋盘格中心点
     chess_colors = classify_borad_chess_color(img, center_points)
 
@@ -344,8 +361,9 @@ def chess_borad_detect(img, debug=False):
 if __name__ == '__main__':
 
     print("开始测试")
-    # img_load = 'img\chessboard_y1.jpg'
-    img_load = 'img\chessboard_f2.jpg'
+    # img_load = 'img/chessboard_y1.jpg'
+    # img_load = 'img/chessboard_f2.jpg'
+    img_load = 'img/tag_3.jpg'
     img_raw = cv2.imread(img_load)
 
     cv2.namedWindow('img_raw', cv2.WINDOW_NORMAL)

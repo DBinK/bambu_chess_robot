@@ -9,7 +9,7 @@ import chess
 
 # 摄像头参数
 camera_params = {
-    'camera_id': 0,
+    'camera_id': "http://localhost:56000/mjpeg",
     'image_width': 1920,
     'image_height': 1080,
     'auto_exposure': 1,
