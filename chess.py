@@ -278,7 +278,7 @@ def get_point_color(img, center_point, radius):
 def classify_borad_chess_color(img, center_points):
     """ 获取棋盘格上棋子的颜色 """
 
-    chess_colors = []
+    borad_chess_colors = []
 
     for point in center_points:
         color = get_point_color(img, point, 20)
@@ -299,12 +299,12 @@ def classify_borad_chess_color(img, center_points):
         else:                                                       # 无棋子
             color = 0
 
-        chess_colors.append(color)
+        borad_chess_colors.append(color)
         # print(f"棋子: {center_points.index(point)+1}, 颜色: {color}")
 
-    print("棋盘格颜色:", chess_colors)
+    print("棋盘格颜色:", borad_chess_colors)
 
-    return chess_colors
+    return borad_chess_colors
 
 
 def draw_chess_borad(img, corners, center_points, chess_colors):
@@ -360,14 +360,14 @@ def chess_borad_detect(img, debug=False):
         return [], [], []
 
     center_points = get_center_points(H_inv)  # 获取棋盘格中心点
-    chess_colors = classify_borad_chess_color(img, center_points)
+    borad_chess_colors = classify_borad_chess_color(img, center_points)
 
     if debug:  # 调试模式
-        draw_img = draw_chess_borad(img, corners, center_points, chess_colors)
+        draw_img = draw_chess_borad(img, corners, center_points, borad_chess_colors)
         cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
         cv2.imshow('img_borad', draw_img)
 
-    return corners, center_points, chess_colors
+    return corners, center_points, borad_chess_colors
 
 
 if __name__ == '__main__':

@@ -58,6 +58,12 @@ class USBCamera:
         print(f'初始化了 {self.camera_id} 号相机, 开始设置参数...')
         self.set_camera_parameters() # 设置相机参数
 
+        # 注册需要暴露的数据
+        self.borad_chess_colors = []
+        self.center_points = []
+        self.black_coords = []
+        self.white_coords = []
+
         # print('启动USB相机图像捕捉循环')
         # self.cam_thread = threading.Thread(target=self.loop)
         # self.cam_thread.start()
@@ -111,11 +117,11 @@ class USBCamera:
 
             if img_trans is not None:
 
-                corners, center_points, chess_colors = chess.chess_borad_detect(img_trans)                  # 获取棋盘格信息
-                black_coords, white_coords, black_contours, white_contours = chess.chess_detect(img_trans)  # 获取棋子位置
+                corners, self.center_points, self.borad_chess_colors = chess.chess_borad_detect(img_trans)            # 获取棋盘格信息
+                self.black_coords, self.white_coords, black_contours, white_contours = chess.chess_detect(img_trans)  # 获取棋子位置
 
                 if corners is not None:  # 画出棋盘格
-                    img_chess = chess.draw_chess_borad(img_trans, corners, center_points, chess_colors)
+                    img_chess = chess.draw_chess_borad(img_trans, corners, self.center_points, self.borad_chess_colors)
                     img_chess = chess.draw_chess(img_chess, black_contours, (255, 100, 0))
                     img_chess = chess.draw_chess(img_chess, white_contours, (0, 100, 255))
 
@@ -146,6 +152,7 @@ class USBCamera:
                 print(f"图像大小: {frame.shape}, 帧率 FPS: {(1 / (dt/1e9)):.2f}, 帧时间: {(dt/1e6):.2f}") 
                 
             time.sleep(0.001)
+            time.sleep(3)
 
         print("结束了 loop 线程")
 
