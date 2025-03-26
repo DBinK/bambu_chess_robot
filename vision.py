@@ -61,6 +61,21 @@ def detect_tags(img):
 
     return detections
 
+def sort_corners(corners):
+    """ 根据角度对四个角点进行排序，确保顺序为左上角、右上角、右下角、左下角。  """
+    
+    center_x = sum(x for x, y in corners) / 4  # 计算质心
+    center_y = sum(y for x, y in corners) / 4
+
+    def angle_from_center(point):  # 计算每个角点相对于质心的角度
+        return np.arctan2(point[1] - center_y, point[0] - center_x)
+    
+    corners = sorted(corners, key=angle_from_center)  # 根据角度对角点进行排序
+
+    corners = [corners[0], corners[1], corners[2], corners[3]]  # 重新排列顺序为左上角、右上角、右下角、左下角
+    
+    return corners
+
 def tags_to_quad_vertices(detections):
     """ 将 Apriltag 标记的角点坐标 转换为 列表形式 """
 
@@ -74,20 +89,29 @@ def tags_to_quad_vertices(detections):
 
     # 提取标记的角点坐标
     for detection in detections:
-        if detection.tag_id == 4:                # 左上
-            x1, y1 = detection.center.tolist()
-        elif detection.tag_id == 9:             # 右上
-            x2, y2 = detection.center.tolist()
-        elif detection.tag_id == 19:             # 右下
-            x3, y3 = detection.center.tolist()
-        elif detection.tag_id == 14:              # 左下
-            x4, y4 = detection.center.tolist()
+
+        detection.corners = sort_corners(detection.corners) # 对角点坐标排序
+
+        if detection.tag_id == 4:                 
+            # x1, y1 = detection.center.tolist()
+            x1, y1 = detection.corners[0].tolist()  # 左上
+        elif detection.tag_id == 9:               
+            # x2, y2 = detection.center.tolist()
+            x2, y2 = detection.corners[1].tolist()  # 右上
+        elif detection.tag_id == 19:            
+            # x3, y3 = detection.center.tolist()
+            x3, y3 = detection.corners[2].tolist()  # 右下
+        elif detection.tag_id == 14:            
+            # x4, y4 = detection.center.tolist()
+            x4, y4 = detection.corners[3].tolist()  # 左下
 
     quad_vertices = [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
 
+    print(f"Apriltag 标记坐标: {quad_vertices}")
+
     return quad_vertices
 
-def homo_trans(quad_vertices, width=int((2560-320)/2), height=int((2100-320)/2)):
+def homo_trans(quad_vertices, width=int(2560/2), height=int(2100/2)):
     """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
 
     # 定义图像中的长方形四个顶点（根据你实际值设定）
@@ -124,7 +148,7 @@ def transform_object_to_printer(point_obj):
 
     return point_printer
 
-def draw_homo_trans(img, H_matrix, width=int((2560-320)/2), height=int((2100-320)/2)):
+def draw_homo_trans(img, H_matrix, width=int(2560/2), height=int(2100/2)):
 
     # 应用透视变换
     warped_image = cv2.warpPerspective(img, H_matrix , (width, height))
@@ -200,7 +224,7 @@ if __name__ == "__main__":
     # 读取图像
     # img = cv2.imread("test/apriltag.jpg")
     # img = cv2.imread("test/tag_2.jpg")
-    img = cv2.imread("img/tag_3.jpg")
+    img = cv2.imread("img/tag_4.png")
 
     # 预处理
     img_pre = pre_process(img)

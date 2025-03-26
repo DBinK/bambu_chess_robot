@@ -1,9 +1,8 @@
+import os
 import time
 import cv2
-import os
 
 import vision
-
 import chess 
 
 
@@ -23,6 +22,7 @@ camera_params = {
     'contrast': 20,
 }
 
+
 def time_diff(last_time=[None]):
     """计算两次调用之间的时间差，单位为ns。"""
     current_time = time.time_ns()     # 获取当前时间（单位：ns）
@@ -35,6 +35,7 @@ def time_diff(last_time=[None]):
         diff = current_time - last_time[0]  # 计算时间差
         last_time[0] = current_time         # 更新上次调用时间
         return diff                         # 返回时间差 ns
+
 
 class USBCamera:
     def __init__(self):

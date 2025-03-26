@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     robot = BambuRobot(reset=False)
     
-    # robot.hard_reset()
+    robot.hard_reset()
 
     
     # robot.move(0, 0 ,10)  # 1号点
