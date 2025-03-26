@@ -41,7 +41,7 @@ def detect_chess_contours(img):
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
 
-        if perimeter < (20 * 4):  # 过滤小的轮廓 
+        if perimeter < (20 * 4) or area < 10:  # 过滤小的轮廓 
             continue
 
         # circularity = (4 * np.pi * area) / (perimeter * perimeter)
@@ -108,11 +108,11 @@ def draw_chess(img, contours, color):
     img_chess = img.copy()
 
     for contour in contours:
-        cv2.drawContours(img_chess, [contour], -1, color, 4)
+        cv2.drawContours(img_chess, [contour], -1, color, 8)
 
     chess_positions = contours_to_positom(contours)
     for chess_position in chess_positions:
-        cv2.circle(img_chess, chess_position, 8, color, -1)
+        cv2.circle(img_chess, chess_position, 16, color, -1)
         cv2.putText(img_chess, f" {chess_position[0], chess_position[1]}", chess_position, cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
     return img_chess
@@ -284,11 +284,19 @@ def classify_borad_chess_color(img, center_points):
         color = get_point_color(img, point, 20)
 
         # 判断颜色
-        if color > (200, 200, 200):  # 白色棋子
-            color = 1
-        elif color < (50, 50, 50):   # 黑色棋子
+        # if color > (200, 200, 200):  # 白色棋子
+        #     color = 1
+        # elif color < (50, 50, 50):   # 黑色棋子
+        #     color = -1
+        # else:                        # 无棋子
+        #     color = 0
+
+        # 判断颜色是否接近黑色或白色
+        if color[0] < 100 and color[1] < 100 and color[2] < 100:  # 接近黑色
             color = -1
-        else:                        # 无棋子
+        elif color[0] > 150 and color[1] > 150 and color[2] > 150:  # 接近白色
+            color = 1
+        else:                                                       # 无棋子
             color = 0
 
         chess_colors.append(color)
