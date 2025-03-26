@@ -31,6 +31,10 @@ class BambuMotion:
         self.send_gcode("G28")  # 回原点
         print("硬复位需要较长时间, 请耐心等待...")
 
+        for i in range(26):
+            print(f"正在等待复位完成, 请稍等... {i+1}/26")
+            time.sleep(1)
+
     def soft_reset(self, speed=None):
         if speed is None:
             speed = self.MOTOR_SPEED

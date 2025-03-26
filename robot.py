@@ -69,7 +69,6 @@ if __name__ == "__main__":
     
     robot.hard_reset()
 
-    
     # robot.move(0, 0 ,10)  # 1号点
     # time.sleep(5)
 
@@ -86,6 +85,7 @@ if __name__ == "__main__":
     # time.sleep(5)
 
     robot.move(94, 170 ,10)  # 5号点
+    robot.move(0, 0 ,10)  # 5号点
     time.sleep(5)
 
     robot.show_chess_board()

@@ -54,6 +54,7 @@ class USBCamera:
         # 初始化相机
         print(f'开始初始化 {self.camera_id} 号相机相机...')
         self.cap = cv2.VideoCapture(self.camera_id)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # 设置缓冲区大小为 1, 只读取最新一帧
 
         print(f'初始化了 {self.camera_id} 号相机, 开始设置参数...')
         self.set_camera_parameters() # 设置相机参数
@@ -151,8 +152,8 @@ class USBCamera:
 
                 print(f"图像大小: {frame.shape}, 帧率 FPS: {(1 / (dt/1e9)):.2f}, 帧时间: {(dt/1e6):.2f}") 
                 
-            time.sleep(0.001)
-            time.sleep(3)
+            # time.sleep(0.001)
+            time.sleep(0.1)
 
         print("结束了 loop 线程")
 
