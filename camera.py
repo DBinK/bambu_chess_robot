@@ -9,7 +9,7 @@ import chess
 
 # 摄像头参数
 camera_params = {
-    'camera_id': "http://localhost:56000/mjpeg",
+    'camera_id': 0,
     'image_width': 1920,
     'image_height': 1080,
     'auto_exposure': 1,
@@ -80,20 +80,35 @@ class USBCamera:
         while not self.cap.isOpened():
             cnt += 1
             print(f"摄像头打开失败，请检查摄像头是否正常连接！{cnt}")
-            time.sleep(0.1)
+            time.sleep(0.5)
             continue
 
         while True:
             ret, frame = self.cap.read()
             
-            # img_pre = vision.pre_process(frame)
-            # detections = vision.detect_tags(img_pre)
+            img_pre = vision.pre_process(frame)
+            detections = vision.detect_tags(img_pre)
 
-            # # 绘制检测结果
-            # img_draw = vision.draw_tags(frame, detections)
-            center_points, chess_colors = chess.chess_borad_detect(frame, True)
+            quad_vertices = vision.tags_to_quad_vertices(detections)
 
-            black_coords, white_coords = chess.chess_detect(frame, True)
+            if quad_vertices is not None and len(quad_vertices) >= 4:
+                # 绘制检测结果
+                img_tags = vision.draw_tags(frame, detections)
+
+                # 透视变换
+                H_matrix, H_inv = vision.homo_trans(quad_vertices)
+                img_trans, img_retrans = vision.draw_homo_trans(img_tags, H_matrix)
+
+            else:
+                img_tags = frame
+                img_trans = frame
+                img_retrans = frame
+
+            # if img_tags:
+
+            #     center_points, chess_colors = chess.chess_borad_detect(img_trans, True)
+
+            #     black_coords, white_coords = chess.chess_detect(img_trans, True)
 
             if ret:
                 # if os.environ.get('DISPLAY') and os.isatty(0):  # 检查有无图形界面
@@ -101,8 +116,14 @@ class USBCamera:
                     cv2.namedWindow("raw", cv2.WINDOW_NORMAL)
                     cv2.imshow("raw", frame)
 
-                    # cv2.namedWindow("img_draw", cv2.WINDOW_NORMAL)
-                    # cv2.imshow("img_draw", img_draw)
+                    cv2.namedWindow("img_tags", cv2.WINDOW_NORMAL)
+                    cv2.imshow("img_tags", img_tags)
+
+                    cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
+                    cv2.imshow("Warped Image", img_trans)
+
+                    cv2.namedWindow("Inv Warped Image", cv2.WINDOW_NORMAL)
+                    cv2.imshow("Inv Warped Image", img_retrans)
                 
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         self.destroy()

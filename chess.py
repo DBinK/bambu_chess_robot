@@ -183,34 +183,32 @@ def detect_borad_corners(img):
 
     contours, hierarchy = cv2.findContours(mask_yellow, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)   # 查找轮廓
   
-    quadrilateral_contours = []
+    if contours:  # 找到最大的轮廓
+        largest_contour = max(contours, key=cv2.contourArea)
 
-    for contour in contours:
-        perimeter = cv2.arcLength(contour, True)
-        if perimeter < img.shape[0]/20 * 4:   # 轮廓太小，可能是噪声，忽略
-            continue
+        perimeter = cv2.arcLength(largest_contour, True)
+        if perimeter < img.shape[0]/6 * 4:   # 轮廓太小，可能是噪声，忽略
+            return []
         
         # 对轮廓进行多边形逼近
-        epsilon = 0.1 * cv2.arcLength(contour, True)
-        approx = cv2.approxPolyDP(contour, epsilon, True)
+        epsilon = 0.1 * cv2.arcLength(largest_contour, True)
+        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
         
         if len(approx) == 4:  # 确保是四边形
-            quadrilateral_contours.append(contour)
+            # 获取四个角点的坐标
+            corners = [(int(point[0][0]), int(point[0][1])) for point in approx]
+            corners = sort_corners(corners)
 
-    if not quadrilateral_contours:
-        print("没有找到四边形轮廓")
+            print("棋盘角点:", corners)
+
+            return corners
+        
+        else:
+            print("没有找到合适的轮廓")
+            return []
+    else:
+        print("没有找到合适的轮廓")
         return []
-
-    # 找到面积最大的四边形轮廓
-    largest_contour = max(quadrilateral_contours, key=cv2.contourArea)
-
-    # 获取四个角点的坐标
-    corners = [(int(point[0][0]), int(point[0][1])) for point in largest_contour]
-    corners = sort_corners(corners)
-
-    print("棋盘角点:", corners)
-
-    return corners
         
 
 def homo_trans(corners, w=300, h=300):
@@ -244,14 +242,18 @@ def trans_coord(point, matrix):
 
 def get_center_points(H_inv, w=300, h=300):
     """ 获取棋盘格中心点坐标 """
+     
     center_points = []
     raw_points = [(1/6*w, 1/6*h), (3/6*w, 1/6*h), (5/6*w, 1/6*h), \
                   (1/6*w, 3/6*h), (3/6*w, 3/6*h), (5/6*w, 3/6*h), \
                   (1/6*w, 5/6*h), (3/6*w, 5/6*h), (5/6*w, 5/6*h)]
+    
     for point in raw_points:
-        center_points.append(trans_coord(point, H_inv))
+        transformed_point = trans_coord(point, H_inv)
+        print(f"原始点: {point}, 变换后点: {transformed_point}")
+        center_points.append(transformed_point)
 
-    # print("棋盘网格的中心点:", center_points)
+    print("棋盘网格的中心点:", center_points)
     return center_points
 
 
@@ -331,6 +333,7 @@ def chess_borad_detect(img, debug=False):
     """ 棋盘格识别总函数 """
 
     corners = detect_borad_corners(img)  # 获取棋盘格角点
+    print("棋盘角点:", corners)
 
     if len(corners) == 0:
         print("没有检测到棋盘")

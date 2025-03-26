@@ -6,7 +6,7 @@ import cv2
 # 初始化一个Detector实例，用于检测和解码Apriltag标记
 at_detector = Detector(
     families="tag16h5",  # 指定使用的Apriltag家族，这里选择的是'tag16h5'
-    nthreads=1,  # 设置用于加速计算的线程数，此处设置为1
+    nthreads=4,  # 设置用于加速计算的线程数，此处设置为1
     quad_decimate=1.0,  # 设置图像简化比例，用于加快处理速度，1.0表示不简化
     quad_sigma=0.0,  # 指定在检测标记前对图像进行高斯模糊的程度，0.0表示不进行模糊处理
     refine_edges=1,  # 设置是否对检测到的标记边缘进行精细化处理，以提高定位精度
@@ -33,21 +33,23 @@ def detect_tags(img):
         width = np.max(x_coords) - np.min(x_coords)
         height = np.max(y_coords) - np.min(y_coords)
 
-        print(f"Tag size: width={width}, height={height}.")
+        # print(f"Tag size: width={width}, height={height}.")
 
         return width, height
 
-    def filter_by_size(detections, min_size=(30, 30), max_size=(100, 100)):
+    def filter_by_size(detections, min_size=(30, 30), max_size=(200, 200)):
         valid_tags = []
         for detection in detections:
             tag_id = detection.tag_id  
             corners = detection.corners  
+            x, y = detection.center.tolist()
 
             # 计算标签大小
             width, height = get_tag_size(corners)
 
             # 根据大小过滤标签
             if (min_size[0] <= width <= max_size[0]) and (min_size[1] <= height <= max_size[1]):
+                print(f"Tag {tag_id} , center={(x, y)}")
                 valid_tags.append(detection)
             else:
                 print(f"Tag {tag_id} is filtered out due to size: width={width}, height={height}.")
@@ -64,27 +66,28 @@ def tags_to_quad_vertices(detections):
 
     # 确保每个需要的 id 都存在
     tag_ids = [detection.tag_id for detection in detections]
+    required_ids = [9, 19, 14, 4]
 
-    if not all(tag_id in [1, 6, 16, 11] for tag_id in tag_ids):
-        print("Apriltag 标记不全, 无法继续进行识别")
+    if len(tag_ids) < 4 or not all(tag_id in tag_ids for tag_id in required_ids):
+        print(f"Apriltag 标记不全, 无法继续进行识别, 识别到: {tag_ids}")
         return None
-        
+
     # 提取标记的角点坐标
     for detection in detections:
-        if detection.tag_id == 1:
+        if detection.tag_id == 4:                # 左上
             x1, y1 = detection.center.tolist()
-        elif detection.tag_id == 6:
+        elif detection.tag_id == 9:             # 右上
             x2, y2 = detection.center.tolist()
-        elif detection.tag_id == 16:
+        elif detection.tag_id == 19:             # 右下
             x3, y3 = detection.center.tolist()
-        elif detection.tag_id == 11:
-            x4, y4= detection.center.tolist()
+        elif detection.tag_id == 14:              # 左下
+            x4, y4 = detection.center.tolist()
 
     quad_vertices = [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
 
     return quad_vertices
 
-def homo_trans(quad_vertices, width=2240, height=2240):
+def homo_trans(quad_vertices, width=2560-320, height=2100-320):
     """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
 
     # 定义图像中的长方形四个顶点（根据你实际值设定）
@@ -121,7 +124,7 @@ def transform_object_to_printer(point_obj):
 
     return point_printer
 
-def draw_homo_trans(img, H_matrix, width=2240, height=2240):
+def draw_homo_trans(img, H_matrix, width=2560-320, height=2100-320):
 
     # 应用透视变换
     warped_image = cv2.warpPerspective(img, H_matrix , (width, height))
@@ -150,7 +153,7 @@ def draw_tags(img, detections):
                 tuple(corners[i].astype(int)),
                 tuple(corners[(i + 1) % 4].astype(int)),
                 (0, 255, 0),
-                2,
+                3,
             )  # 绿色线条
 
         # 在中心绘制标签 ID
@@ -160,48 +163,12 @@ def draw_tags(img, detections):
             f"{detection.tag_id}",
             center,
             cv2.FONT_HERSHEY_SIMPLEX,
-            1.0,
+            2.0,
             (0, 0, 222),
             2,
         )  # 红色文本
 
     return img_draw
-
-def detect_chess(img_trans):
-    img_gray = cv2.cvtColor(img_trans, cv2.COLOR_BGR2GRAY)
-    _, img_bin = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)  # 二值化
-    img_blur = cv2.medianBlur(img_bin, 15)
-
-    from point_detector import PointDetector
-
-    # 初始化点检测器
-    point_detector = PointDetector()
-
-    # 点检测结果
-    red_point, green_point = point_detector.detect(img_trans)
-    img_point = point_detector.draw(img_trans)  # 绘制检测结果
-
-    cv2.namedWindow('points', cv2.WINDOW_NORMAL)
-    cv2.imshow('points', img_point)
-
-    #检测轮廓
-    contours, hierarchy = cv2.findContours(img_gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-
-    circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, dp=1, minDist=20,
-                            param1=50, param2=30, minRadius=0, maxRadius=0)
-
-    #将所有坐标和半信息取整数
-    circles = np.uint(np.around(circles))
-    # print(circles) #打印线段信息
-
-    img_contours = cv2.drawContours(img_trans, contours, -1, (0,255,0), 5)
-    cv2.namedWindow('contours', cv2.WINDOW_NORMAL)
-    cv2.imshow('contours', img_contours) #显示图像
-
-    cv2.namedWindow("img_bin", cv2.WINDOW_NORMAL)
-    cv2.imshow("img_bin", img_bin)
-
-    return circles
 
 def draw_chess(img_trans, circles):
     img_chess = img_trans.copy()
@@ -233,7 +200,7 @@ if __name__ == "__main__":
     # 读取图像
     # img = cv2.imread("test/apriltag.jpg")
     # img = cv2.imread("test/tag_2.jpg")
-    img = cv2.imread("test/tag_3.jpg")
+    img = cv2.imread("img/tag_3.jpg")
 
     # 预处理
     img_pre = pre_process(img)
@@ -249,13 +216,13 @@ if __name__ == "__main__":
     H_matrix, H_inv = homo_trans(quad_vertices)
     img_trans, img_retrans = draw_homo_trans(img, H_matrix)
 
-    # 棋子检测
-    print("开始检测棋子")
-    circles = detect_chess(img_trans)
-    img_chess = draw_chess(img_trans, circles)
+    # # 棋子检测
+    # print("开始检测棋子")
+    # circles = detect_chess(img_trans)
+    # img_chess = draw_chess(img_trans, circles)
 
-    cv2.namedWindow('chess Image', cv2.WINDOW_NORMAL)
-    cv2.imshow('chess Image', img_chess)
+    # cv2.namedWindow('chess Image', cv2.WINDOW_NORMAL)
+    # cv2.imshow('chess Image', img_chess)
 
     # 坐标系转换
     # p_raw = [508, 373]  # 1号点
