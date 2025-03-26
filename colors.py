@@ -1,3 +1,6 @@
+# colors.py
+# 此处存放 HSV 颜色识别的参数
+
 RED1_LOWER = [0, 43, 46]
 RED1_UPPER = [10, 255, 255]
 
