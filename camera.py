@@ -10,14 +10,17 @@ import chess
 # 摄像头参数
 camera_params = {
     'camera_id': 0,
-    'image_width': 1920,
-    'image_height': 1080,
+    # 'image_width': 1920,
+    # 'image_height': 1080,
+    'image_width': 1280,
+    'image_height': 720,
     'auto_exposure': 1,
-    'exposure_time': 10000,
-    'fps': 60,
+    'exposure_time': 4000,
+    'fps': 30,
     'gain': 100,
     'auto_wb': 0,
     'wb_temperature': 5000,
+    'contrast': 20,
 }
 
 def time_diff(last_time=[None]):
@@ -45,6 +48,7 @@ class USBCamera:
         self.gain = camera_params.get('gain', 0)
         self.auto_wb = camera_params.get('auto_wb', 0)
         self.wb_temperature = camera_params.get('wb_temperature', 5000)
+        self.contrast = camera_params.get('contrast', 27)
 
         # 初始化相机
         print(f'开始初始化 {self.camera_id} 号相机相机...')
@@ -67,6 +71,7 @@ class USBCamera:
         self.cap.set(cv2.CAP_PROP_GAIN, self.gain)
         self.cap.set(cv2.CAP_PROP_AUTO_WB, self.auto_wb)  # 关闭自动白平衡
         self.cap.set(cv2.CAP_PROP_WB_TEMPERATURE, self.wb_temperature)  # 设置白平衡色温
+        self.cap.set(cv2.CAP_PROP_CONTRAST, self.contrast)
 
 
         print(f"设置的相机: {self.camera_id} 号相机")
@@ -104,11 +109,11 @@ class USBCamera:
                 img_trans = frame
                 img_retrans = frame
 
-            # if img_tags:
+            if img_trans is not None:
 
-            #     center_points, chess_colors = chess.chess_borad_detect(img_trans, True)
+                center_points, chess_colors = chess.chess_borad_detect(img_trans, True)
 
-            #     black_coords, white_coords = chess.chess_detect(img_trans, True)
+                black_coords, white_coords = chess.chess_detect(img_trans, True)
 
             if ret:
                 # if os.environ.get('DISPLAY') and os.isatty(0):  # 检查有无图形界面
@@ -116,14 +121,14 @@ class USBCamera:
                     cv2.namedWindow("raw", cv2.WINDOW_NORMAL)
                     cv2.imshow("raw", frame)
 
-                    cv2.namedWindow("img_tags", cv2.WINDOW_NORMAL)
-                    cv2.imshow("img_tags", img_tags)
+                    # cv2.namedWindow("img_tags", cv2.WINDOW_NORMAL)
+                    # cv2.imshow("img_tags", img_tags)
 
-                    cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
-                    cv2.imshow("Warped Image", img_trans)
+                    # cv2.namedWindow("Warped Image", cv2.WINDOW_NORMAL)
+                    # cv2.imshow("Warped Image", img_trans)
 
-                    cv2.namedWindow("Inv Warped Image", cv2.WINDOW_NORMAL)
-                    cv2.imshow("Inv Warped Image", img_retrans)
+                    # cv2.namedWindow("Inv Warped Image", cv2.WINDOW_NORMAL)
+                    # cv2.imshow("Inv Warped Image", img_retrans)
                 
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         self.destroy()
@@ -131,7 +136,7 @@ class USBCamera:
 
                 dt = time_diff()         
 
-                print(f"图像大小: {frame.shape}, 帧率 FPS: {1 / (dt/1e9) }, 帧时间: {dt/1e6}")    
+                print(f"图像大小: {frame.shape}, 帧率 FPS: {(1 / (dt/1e9)):.2f}, 帧时间: {(dt/1e6):.2f}") 
                 
             time.sleep(0.001)
 
@@ -139,6 +144,7 @@ class USBCamera:
 
     def destroy(self):
         self.cap.release()  # 释放摄像头资源
+
 
 if __name__ == '__main__':
     camera = USBCamera()

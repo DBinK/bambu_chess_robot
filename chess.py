@@ -41,7 +41,7 @@ def detect_chess_contours(img):
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
 
-        if perimeter < (50 * 4):  # 过滤小的轮廓 
+        if perimeter < (20 * 4):  # 过滤小的轮廓 
             continue
 
         # circularity = (4 * np.pi * area) / (perimeter * perimeter)
@@ -60,7 +60,7 @@ def detect_chess_contours(img):
         # print(f"最小外接圆面积与轮廓面积之比: {area_ratio}")
         
         # 过滤条件
-        if (area_ratio < 1.5)  and (0.95 < aspect_ratio < 1.05):
+        if (area_ratio < 1.6)  and (0.90 < aspect_ratio < 1.10):
             filtered_contours.append(contour)
 
     return filtered_contours      
@@ -108,11 +108,11 @@ def draw_chess(img, contours, color):
     img_chess = img.copy()
 
     for contour in contours:
-        cv2.drawContours(img_chess, [contour], -1, color, 2)
+        cv2.drawContours(img_chess, [contour], -1, color, 4)
 
     chess_positions = contours_to_positom(contours)
     for chess_position in chess_positions:
-        cv2.circle(img_chess, chess_position, 7, color, -1)
+        cv2.circle(img_chess, chess_position, 8, color, -1)
         cv2.putText(img_chess, f" {chess_position[0], chess_position[1]}", chess_position, cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
     return img_chess
@@ -139,8 +139,8 @@ def chess_detect(img, debug=False):
     print(f"白色棋子数量: {len(white_coords)}, 位置: {white_coords}")
  
     if debug:  # 调试模式
-        img_chess = draw_chess(img, black_contours, (255, 0, 0))
-        img_chess = draw_chess(img_chess, white_contours, (0, 0, 255))
+        img_chess = draw_chess(img, black_contours, (255, 100, 0))
+        img_chess = draw_chess(img_chess, white_contours, (0, 100, 255))
         cv2.namedWindow("img_chess", cv2.WINDOW_NORMAL)
         cv2.imshow("img_chess", img_chess)
 
