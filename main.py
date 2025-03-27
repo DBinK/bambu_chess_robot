@@ -97,6 +97,7 @@ class ChessBot:
        
 
     def mode_2(self):
+
         logger.info("进入模式 2: 将任意 2 颗黑棋子和 2 颗白棋子依次放置到指定方格中。")
 
         bot.show_chess_board()  # 展示棋盘
@@ -104,6 +105,7 @@ class ChessBot:
         placed_chess = 0  # 记录已经放置的棋子数量
 
         while placed_chess < 4:
+            bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
             
             self.update_chess_coords()  # 更新背景棋子位置
 
@@ -127,6 +129,8 @@ class ChessBot:
     
 
     def mode_3(self):
+        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
+        
         logger.info("进入模式 3: 人机对弈。")
         logger.info("\n若人先放置黑棋, 输入数字0回车, 人先手; \n输入1~9数字后回车, 机器执黑棋先手")
 
