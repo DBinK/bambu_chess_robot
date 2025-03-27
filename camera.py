@@ -16,7 +16,7 @@ camera_params = {
     'image_width': 1280,
     'image_height': 720,
     'auto_exposure': 1,
-    'exposure_time': 4000,
+    'exposure_time': 5000,
     'fps': 30,
     'gain': 100,
     'auto_wb': 0,

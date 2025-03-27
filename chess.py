@@ -60,7 +60,7 @@ def detect_chess_contours(img):
         # print(f"最小外接圆面积与轮廓面积之比: {area_ratio}")
         
         # 过滤条件
-        if (area_ratio < 1.6)  and (0.90 < aspect_ratio < 1.10):
+        if (area_ratio < 1.3)  and (0.90 < aspect_ratio < 1.10):
             filtered_contours.append(contour)
 
     return filtered_contours      
@@ -204,10 +204,10 @@ def detect_borad_corners(img):
             return corners
         
         else:
-            print("没有找到合适的轮廓")
+            # print("没有找到合适的轮廓")
             return []
     else:
-        print("没有找到合适的轮廓")
+        # print("没有找到合适的轮廓")
         return []
         
 
@@ -294,7 +294,7 @@ def classify_borad_chess_color(img, center_points):
         # 判断颜色是否接近黑色或白色
         if color[0] < 100 and color[1] < 100 and color[2] < 100:  # 接近黑色
             color = -1
-        elif color[0] > 150 and color[1] > 150 and color[2] > 150:  # 接近白色
+        elif color[0] > 120 and color[1] > 120 and color[2] > 120:  # 接近白色
             color = 1
         else:                                                       # 无棋子
             color = 0
@@ -344,7 +344,7 @@ def chess_borad_detect(img, debug=False):
     corners = detect_borad_corners(img)  # 获取棋盘格角点
 
     if len(corners) == 0:
-        print("没有检测到棋盘")
+        # print("没有检测到棋盘")
         
         if debug:  # 调试模式
             cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)

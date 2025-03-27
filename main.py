@@ -59,16 +59,16 @@ class ChessBot:
         logger.warning(f"正在拾取 {color_str[chess_color]} 棋，放置到 {grid_number} 号方格。")
 
         if chess_color == self.BLACK:
-            if len(self.white_coords) < 1:
-                logger.error("没有找到白色棋子的位置信息。")
-                return
-            from_x, from_y = self.to_printer_coord(self.white_coords[0])
-
-        elif chess_color == self.WHITE:
             if len(self.black_coords) < 1:
                 logger.error("没有找到黑色棋子的位置信息。")
                 return
             from_x, from_y = self.to_printer_coord(self.black_coords[0])
+
+        elif chess_color == self.WHITE:
+            if len(self.white_coords) < 1:
+                logger.error("没有找到白色棋子的位置信息。")
+                return
+            from_x, from_y = self.to_printer_coord(self.white_coords[0])
 
         if len(self.center_points) < 9:
             logger.error(f"棋盘上没有 {grid_number} 号方格的位置信息。")
@@ -80,11 +80,14 @@ class ChessBot:
         bot.move_piece(from_x, from_y, to_x, to_y)  # 放置棋子
         
     def mode_1(self):
+        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
+        
         logger.info("进入模式 1: 装置将任意 1 颗黑棋子放置到 5 号方格中。\n")
 
         bot.show_chess_board()  # 展示棋盘
 
         self.update_chess_coords()  # 更新背景棋子位置
+        self.update_board()
 
         self.pick_and_place(chess_color=self.BLACK, grid_number=5) # 放置棋子 5 号方格
         

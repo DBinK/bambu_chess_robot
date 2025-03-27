@@ -7,11 +7,11 @@ from config import hostname, access_code, serial
 class BambuMotion:
     def __init__(self, reset=True):
         self.bambu_client = BambuClient(hostname, access_code, serial)
-        self.position_x = 128  # 默认位置
-        self.position_y = 128
-        self.position_z = 10
+        self.position_x = 273  # 默认位置
+        self.position_y = 220
+        self.position_z = 40
 
-        self.MOTOR_SPEED = 5000  # 默认速度 18000
+        self.MOTOR_SPEED = 15000  # 默认速度 18000
 
         self.PX_LIMIT = [0, 280]
         self.PY_LIMIT = [0, 256]
@@ -35,12 +35,12 @@ class BambuMotion:
             print(f"正在等待复位完成, 请稍等... {i+1}/26")
             time.sleep(1)
 
-    def soft_reset(self, speed=None):
-        if speed is None:
-            speed = self.MOTOR_SPEED
-        print("正在执行软复位...")
-        self.move(128, 128, 10, speed)  # 回原点
-        print("软复位完成")
+    # def soft_reset(self, speed=None):
+    #     if speed is None:
+    #         speed = self.MOTOR_SPEED
+    #     print("正在执行软复位...")
+    #     self.move(128, 128, 10, speed)  # 回原点
+    #     print("软复位完成")
 
     def lock_motor(self):
         self.send_gcode("M17 ; 锁定所有电机")
