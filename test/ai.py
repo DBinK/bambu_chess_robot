@@ -23,18 +23,18 @@ class TicTacToeAI:
         """
         检查游戏是否结束
         返回值:
-        - None: 游戏未结束
-        - 玩家标识: 某玩家获胜
-        - 'draw': 平局
+        - False: 游戏未结束
+        - -1 / 1: 某玩家获胜
+        - 99: 平局
         """
         for player in self.players:
             if self.check_win(board, player):
-                return player
+                return player  # 返回获胜玩家 ID
         
         if not self.get_empty_positions(board):
-            return 'draw'
+            return 99  # 平局返回99
         
-        return None
+        return False   # 未结束返回False
 
     def evaluate_move(self, board, pos, player):
         temp_board = board.copy()
@@ -145,9 +145,9 @@ class TicTacToeGame:
 
             # 使用新的check_game_over函数判断游戏状态
             result = self.ai.check_game_over(self.board)
-            if result is not None:
+            if result:
                 self.print_board()
-                if result == 'draw':
+                if result == 99:
                     print("平局！")
                 else:
                     print(f"{result} 获胜！")
