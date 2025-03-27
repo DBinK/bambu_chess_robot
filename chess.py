@@ -135,8 +135,8 @@ def chess_detect(img, debug=False):
     black_coords = contours_to_positom(black_contours)  # 获取黑棋子位置
     white_coords = contours_to_positom(white_contours)  # 获取白棋子位置
 
-    print(f"黑色棋子数量: {len(black_coords)}, 位置: {black_coords}")
-    print(f"白色棋子数量: {len(white_coords)}, 位置: {white_coords}")
+    # print(f"黑色棋子数量: {len(black_coords)}, 位置: {black_coords}")
+    # print(f"白色棋子数量: {len(white_coords)}, 位置: {white_coords}")
  
     if debug:  # 调试模式
         img_chess = draw_chess(img, black_contours, (255, 100, 0))
@@ -199,7 +199,7 @@ def detect_borad_corners(img):
             corners = [(int(point[0][0]), int(point[0][1])) for point in approx]
             corners = sort_corners(corners)
 
-            print("棋盘角点:", corners)
+            # print("棋盘角点:", corners)
 
             return corners
         
@@ -253,7 +253,7 @@ def get_center_points(H_inv, w=300, h=300):
         #  print(f"原始点: {point}, 变换后点: {transformed_point}")
         center_points.append(transformed_point)
 
-    print("棋盘网格的中心点:", center_points)
+    # print("棋盘网格的中心点:", center_points)
     return center_points
 
 
@@ -302,7 +302,7 @@ def classify_borad_chess_color(img, center_points):
         borad_chess_colors.append(color)
         # print(f"棋子: {center_points.index(point)+1}, 颜色: {color}")
 
-    print("棋盘格颜色:", borad_chess_colors)
+    # print("棋盘格颜色:", borad_chess_colors)
 
     return borad_chess_colors
 
@@ -342,7 +342,6 @@ def chess_borad_detect(img, debug=False):
     """ 棋盘格识别总函数 """
 
     corners = detect_borad_corners(img)  # 获取棋盘格角点
-    print("棋盘角点:", corners)
 
     if len(corners) == 0:
         print("没有检测到棋盘")

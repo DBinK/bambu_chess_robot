@@ -2,7 +2,7 @@ import os
 import time
 import cv2
 
-import vision
+import tags
 import chess 
 
 
@@ -99,17 +99,17 @@ class USBCamera:
         while True:
             ret, frame = self.cap.read()
             
-            img_pre = vision.pre_process(frame)       # 预处理
-            detections = vision.detect_tags(img_pre)  # 检测标记
+            img_pre = tags.pre_process(frame)       # 预处理
+            detections = tags.detect_tags(img_pre)  # 检测标记
 
-            quad_vertices = vision.tags_to_quad_vertices(detections)  # 获取四个角点
+            quad_vertices = tags.tags_to_quad_vertices(detections)  # 获取四个角点
 
             if quad_vertices is not None and len(quad_vertices) >= 4:
 
-                img_tags = vision.draw_tags(frame, detections)      # 绘制tag检测结果
+                img_tags = tags.draw_tags(frame, detections)      # 绘制tag检测结果
 
-                H_matrix, H_inv = vision.homo_trans(quad_vertices)  # 透视变换
-                img_trans, img_retrans = vision.draw_homo_trans(img_tags, H_matrix)  # 绘制透视变换
+                H_matrix, H_inv = tags.homo_trans(quad_vertices)  # 透视变换
+                img_trans, img_retrans = tags.draw_homo_trans(img_tags, H_matrix)  # 绘制透视变换
 
             else:
                 img_tags = frame
@@ -150,7 +150,7 @@ class USBCamera:
 
                 dt = time_diff()         
 
-                print(f"图像大小: {frame.shape}, 帧率 FPS: {(1 / (dt/1e9)):.2f}, 帧时间: {(dt/1e6):.2f}") 
+                # print(f"图像大小: {frame.shape}, 帧率 FPS: {(1 / (dt/1e9)):.2f}, 帧时间: {(dt/1e6):.2f}") 
                 
             # time.sleep(0.001)
             time.sleep(0.1)

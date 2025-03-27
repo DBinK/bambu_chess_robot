@@ -49,10 +49,11 @@ def detect_tags(img):
 
             # 根据大小过滤标签
             if (min_size[0] <= width <= max_size[0]) and (min_size[1] <= height <= max_size[1]):
-                #  print(f"Tag {tag_id} , center={(x, y)}")
+                # print(f"Tag {tag_id} , center={(x, y)}")
                 valid_tags.append(detection)
             else:
-                print(f"Tag {tag_id} is filtered out due to size: width={width}, height={height}.")
+                # print(f"Tag {tag_id} is filtered out due to size: width={width}, height={height}.")
+                continue
         
         return valid_tags
     
@@ -84,7 +85,7 @@ def tags_to_quad_vertices(detections):
     required_ids = [9, 19, 14, 4]
 
     if len(tag_ids) < 4 or not all(tag_id in tag_ids for tag_id in required_ids):
-        print(f"Apriltag 标记不全, 无法继续进行识别, 识别到: {tag_ids}")
+        # print(f"Apriltag 标记不全, 无法继续进行识别, 识别到: {tag_ids}")
         return None
 
     # 提取标记的角点坐标
@@ -107,7 +108,7 @@ def tags_to_quad_vertices(detections):
 
     quad_vertices = [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
 
-    print(f"Apriltag 标记坐标: {quad_vertices}")
+    # print(f"Apriltag 标记坐标: {quad_vertices}")
 
     return quad_vertices
 
