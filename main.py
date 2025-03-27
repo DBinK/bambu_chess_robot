@@ -1,6 +1,7 @@
 import time
 import threading
 
+from cv2 import log
 from loguru import logger
 
 from camera import USBCamera
@@ -36,6 +37,12 @@ class ChessBot:
         self.black_coords = cam.get_black_coords()
         self.white_coords = cam.get_white_coords()
 
+    def to_printer_coord(self, img_coord):
+        printer_coord = []
+        printer_coord[0] = img_coord[0] / 10 * 2
+        printer_coord[1] = img_coord[1] / 10 * 2
+        return printer_coord
+
     def pick_and_place(self, chess_color, grid_number):  # 抓取棋子并放置
 
         color_str = {self.BLACK: "黑色", self.WHITE: "白色" }
@@ -43,12 +50,19 @@ class ChessBot:
         logger.warning(f"正在拾取 {color_str[chess_color]} 棋，放置到 {grid_number} 号方格。")
 
         if chess_color == self.BLACK:
-            bot.move_piece(self.black_coords[0][0], self.black_coords[0][1], \
-                self.center_points[grid_number-1][0], self.center_points[grid_number-1][1])
-            
+            from_x = self.to_printer_coord(self.white_coords[0][0])
+            from_y = self.to_printer_coord(self.white_coords[0][1])
         elif chess_color == self.WHITE:
-            bot.move_piece(self.white_coords[0][0], self.white_coords[0][1], \
-                self.center_points[grid_number-1][0], self.center_points[grid_number-1][1])
+            from_x = self.to_printer_coord(self.black_coords[0][0])
+            from_y = self.to_printer_coord(self.black_coords[0][1])
+
+        to_x = self.to_printer_coord(self.center_points[grid_number-1][0])
+        to_y = self.to_printer_coord(self.center_points[grid_number-1][1])
+
+        logger.info(f"正在将 {color_str[chess_color]} 棋从 {from_x} , {from_y} 移动到 {to_x} , {to_y}")
+        bot.move_piece(from_x, from_y, to_x, to_y)  # 放置棋子
+        
+        
     def mode_1(self):
         logger.info("进入模式 1: 装置将任意 1 颗黑棋子放置到 5 号方格中。\n")
 
