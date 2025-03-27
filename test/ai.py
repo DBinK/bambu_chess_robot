@@ -105,7 +105,6 @@ class TicTacToe:
 
         for pos in empty:
             score = self.evaluate_move(pos, player)
-            print(f"评估位置 {pos}: {score}")
             if score > max_score:
                 max_score = score
                 best_pos = pos
@@ -127,15 +126,34 @@ class TicTacToe:
             except ValueError:
                 print("请输入数字1-9")
 
-    def play(self):
-        """开始游戏"""
+    def play(self, first_move=0):
+        """开始游戏
+        first_move: 0表示人类先手，1-9表示AI先手并下在对应位置
+        """
         print(f"游戏开始！玩家: {self.players[0]}, AI: {self.players[1]}")
+        
+        # 处理AI先手的情况
+        if first_move > 0:
+            move = first_move - 1
+            row, col = divmod(move, 3)
+            if 0 <= row < 3 and 0 <= col < 3 and self.board[row][col] == 0:
+                self.board[row][col] = self.ai_player
+                self.current_player = self.players[0]  # 切换回人类玩家
+                print(f"AI先手，选择位置: {first_move}")
+            else:
+                print(f"位置{first_move}无效，AI将随机选择位置")
+                empty = self.get_empty_positions()
+                if empty:
+                    pos = random.choice(empty)
+                    self.board[pos[0]][pos[1]] = self.ai_player
+                    self.current_player = self.players[0]
+        
         while True:
             self.print_board()
             if self.current_player == self.ai_player:
                 print("AI正在思考...")
                 pos = self.find_best_move(self.ai_player)
-                print(f"AI选择位置: {pos}")
+                print(f"AI选择位置: {pos[0]*3 + pos[1] + 1}")
             else:
                 pos = self.player_move()
 
@@ -155,4 +173,12 @@ class TicTacToe:
 
 if __name__ == "__main__":
     game = TicTacToe(player1=1, player2=-1, empty=0)
-    game.play()
+    
+    # 示例用法：
+    # game.play()          # 默认人类先手
+    # game.play(0)         # 人类先手
+    # game.play(5)         # AI先手并在中心位置(5)下子
+    # game.play(1)         # AI先手并在左上角(1)下子
+    
+    first_move = int(input("请输入先手设置(0=人类先手，1-9=AI先手并在对应位置下子): "))
+    game.play(first_move)
