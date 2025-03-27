@@ -2,36 +2,30 @@ import random
 
 class TicTacToeAI:
     def __init__(self, player1=-1, player2=1, empty=0):
-        """
-        初始化游戏AI
-        :param player1: 玩家1的标识（默认人类为-1）
-        :param player2: 玩家2的标识（默认AI为1）
-        :param empty: 空位置的标识（默认为0）
-        """
         self.players = [player1, player2]
         self.empty = empty
+        # 定义所有可能的胜利线（一维数组索引）
+        self.win_lines = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],  # 行
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],  # 列
+            [0, 4, 8], [2, 4, 6]              # 对角线
+        ]
 
     def get_empty_positions(self, board):
-        """获取所有空位置坐标"""
-        return [(i, j) for i in range(3) for j in range(3) if board[i][j] == self.empty]
+        """获取所有空位置索引"""
+        return [i for i in range(9) if board[i] == self.empty]
 
     def check_win(self, board, player):
         """检查指定玩家是否胜利"""
-        for i in range(3):
-            if all(board[i][j] == player for j in range(3)):
+        for line in self.win_lines:
+            if all(board[i] == player for i in line):
                 return True
-            if all(board[j][i] == player for j in range(3)):
-                return True
-        if all(board[i][i] == player for i in range(3)):
-            return True
-        if all(board[i][2 - i] == player for i in range(3)):
-            return True
         return False
 
     def evaluate_move(self, board, pos, player):
         """评估指定位置的得分"""
-        temp_board = [row.copy() for row in board]
-        temp_board[pos[0]][pos[1]] = player
+        temp_board = board.copy()
+        temp_board[pos] = player
         score = 0
         opponent = self.players[1] if player == self.players[0] else self.players[0]
 
@@ -40,10 +34,8 @@ class TicTacToeAI:
             return float('inf')
 
         # 防御得分：检查是否阻挡对手的胜利机会
-        for line in [[(i, j) for j in range(3)] for i in range(3)] + \
-                    [[(j, i) for j in range(3)] for i in range(3)] + \
-                    [[(i, i) for i in range(3)], [(i, 2-i) for i in range(3)]]:
-            values = [board[i][j] for (i,j) in line]
+        for line in self.win_lines:
+            values = [board[i] for i in line]
             
             # 检查间隔两子情况（如X _ X）
             if values.count(opponent) == 2 and self.empty in values:
@@ -58,30 +50,21 @@ class TicTacToeAI:
                     score += 100
 
         # 进攻得分
-        for line in [[(i, j) for j in range(3)] for i in range(3)] + \
-                    [[(j, i) for j in range(3)] for i in range(3)] + \
-                    [[(i, i) for i in range(3)], [(i, 2-i) for i in range(3)]]:
-            values = [temp_board[i][j] for (i,j) in line]
+        for line in self.win_lines:
+            values = [temp_board[i] for i in line]
             if values.count(player) == 2 and self.empty in values:
                 score += 10
 
-        # 位置权重
-        if pos == (1, 1):
-            score += 3
-        elif (pos[0] % 2 == 0 and pos[1] % 2 == 0):
-            score += 2
-        else:
-            score += 1
+        # 位置权重（中心>角落>边）
+        position_weights = [2, 1, 2, 
+                           1, 3, 1, 
+                           2, 1, 2]
+        score += position_weights[pos]
 
         return score
 
     def find_best_move(self, board, current_player):
-        """
-        寻找最优落子位置
-        :param board: 当前棋盘状态（3x3列表）
-        :param current_player: 当前玩家标识
-        :return: (row, col) 最优落子位置
-        """
+        """寻找最优落子位置"""
         empty = self.get_empty_positions(board)
         if not empty:
             return None
@@ -97,14 +80,14 @@ class TicTacToeAI:
             elif score == max_score:
                 best_pos = random.choice([best_pos, pos])
 
-        return best_pos if best_pos else random.choice(empty)
+        return best_pos
 
 
 class TicTacToeGame:
-    """游戏交互界面，使用TicTacToeAI进行决策"""
+    """游戏交互界面"""
     def __init__(self, player1=-1, player2=1, empty=0):
         self.ai = TicTacToeAI(player1, player2, empty)
-        self.board = [[empty] * 3 for _ in range(3)]
+        self.board = [empty] * 9
         self.current_player = player1
         self.player1 = player1
         self.player2 = player2
@@ -113,10 +96,10 @@ class TicTacToeGame:
     def print_board(self):
         """打印当前棋盘状态"""
         print("-------------")
-        for row in self.board:
+        for i in range(0, 9, 3):
             print("|", end=' ')
-            for cell in row:
-                print(cell if cell != self.empty else '.', end=' | ')
+            for j in range(3):
+                print(self.board[i+j] if self.board[i+j] != self.empty else '.', end=' | ')
             print("\n-------------")
 
     def player_move(self):
@@ -124,25 +107,21 @@ class TicTacToeGame:
         while True:
             try:
                 move = int(input(f"请输入落子位置 (1-9), 你执{self.current_player}: ")) - 1
-                row, col = divmod(move, 3)
-                if 0 <= row < 3 and 0 <= col < 3 and self.board[row][col] == self.empty:
-                    return (row, col)
+                if 0 <= move < 9 and self.board[move] == self.empty:
+                    return move
                 print("位置无效, 请重新输入")
             except ValueError:
                 print("请输入数字1-9")
 
     def play(self, first_move=0):
-        """开始游戏
-        :param first_move: 0=人类先手，1-9=AI先手并在对应位置下子
-        """
+        """开始游戏"""
         print(f"游戏开始！玩家: {self.player1}, AI: {self.player2}")
         
         # AI先手逻辑
         if first_move > 0:
             move = first_move - 1
-            row, col = divmod(move, 3)
-            if 0 <= row < 3 and 0 <= col < 3 and self.board[row][col] == self.empty:
-                self.board[row][col] = self.player2
+            if 0 <= move < 9 and self.board[move] == self.empty:
+                self.board[move] = self.player2
                 self.current_player = self.player1
                 print(f"AI先手，选择位置: {first_move}")
             else:
@@ -150,7 +129,7 @@ class TicTacToeGame:
                 empty = self.ai.get_empty_positions(self.board)
                 if empty:
                     pos = random.choice(empty)
-                    self.board[pos[0]][pos[1]] = self.player2
+                    self.board[pos] = self.player2
                     self.current_player = self.player1
         
         while True:
@@ -158,11 +137,11 @@ class TicTacToeGame:
             if self.current_player == self.player2:  # AI回合
                 print("AI正在思考...")
                 pos = self.ai.find_best_move(self.board, self.player2)
-                print(f"AI选择位置: {pos[0]*3 + pos[1] + 1}")
+                print(f"AI选择位置: {pos + 1}")
             else:  # 玩家回合
                 pos = self.player_move()
 
-            self.board[pos[0]][pos[1]] = self.current_player
+            self.board[pos] = self.current_player
 
             # 检查游戏结束条件
             if self.ai.check_win(self.board, self.current_player):
@@ -180,28 +159,18 @@ class TicTacToeGame:
 
 
 if __name__ == "__main__":
-    # 示例用法
     game = TicTacToeGame(player1=-1, player2=1, empty=0)
-    
-    # 获取先手设置
     first_move = int(input("请输入先手设置(0=人类先手，1-9=AI先手并在对应位置下子): "))
     game.play(first_move)
 
 """
+
 # 在其他文件中引用
+
 from tictactoe import TicTacToeAI
 
-# 创建AI实例
-ai = TicTacToeAI(player1=-1, player2=1, empty=0)
+ai = TicTacToeAI()
+board = [0]*9  # 空棋盘
+best_move = ai.find_best_move(board, player=1)  # 返回0-8的索引
 
-# 获取AI决策
-board = [
-    [-1, 0, 1],
-    [0, 1, 0],
-    [0, 0, -1]
-]
-best_move = ai.find_best_move(board, player=1)  # 返回(row, col)
-
-# 检查胜利
-is_win = ai.check_win(board, player=-1)
 """
