@@ -112,7 +112,8 @@ def tags_to_quad_vertices(detections):
 
     return quad_vertices
 
-def homo_trans(quad_vertices, width=int((2560-10)/2), height=int((2100-10)/2)):
+def homo_trans(quad_vertices, width=int((2560-100)/2), height=int((2100-100)/2)):
+# def homo_trans(quad_vertices, width=2560-100, height=2100-100):
     """ 计算 将图像中的特定四边形区域 变换为目标长方形区域 所需的矩阵 H """
 
     # 定义图像中的长方形四个顶点（根据你实际值设定）
@@ -149,7 +150,8 @@ def transform_object_to_printer(point_obj):
 
     return point_printer
 
-def draw_homo_trans(img, H_matrix, width=int((2560-10)/2), height=int((2100-10)/2)):
+def draw_homo_trans(img, H_matrix, width=int((2560-100)/2), height=int((2100-100)/2)):
+# def draw_homo_trans(img, H_matrix, width=2560-100, height=2100-100):
 
     # 应用透视变换
     warped_image = cv2.warpPerspective(img, H_matrix , (width, height))

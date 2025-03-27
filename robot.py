@@ -4,8 +4,8 @@ from motion import BambuMotion
 class BambuRobot(BambuMotion):
     def __init__(self, reset=True):
         super().__init__(reset=reset)
-        self.STANDBY_Z = 50   # 待机高度
-        self.CHESS_Z = 30     # 棋子高度
+        self.STANDBY_Z = 40   # 待机高度
+        self.CHESS_Z = 20     # 棋子高度
         self.Z_SPEED = 48000  # Z轴速度
 
     def move_z(self, pz, speed=None):
@@ -53,7 +53,7 @@ class BambuRobot(BambuMotion):
     def show_chess_board(self):
         print("展示棋盘")
         self.move_z(self.STANDBY_Z)                 # 抬起
-        self.move(273, 250, self.STANDBY_Z, 30000)  # 移动到待机处
+        self.move(273, 220, self.STANDBY_Z, 30000)  # 移动到待机处
         print("待机并展示棋盘 \n")
 
     def move_piece(self, from_x, from_y, to_x, to_y):
@@ -68,7 +68,9 @@ if __name__ == "__main__":
 
     robot = BambuRobot(reset=False)
     
-    robot.hard_reset()
+    robot.show_chess_board()
+    time.sleep(5)
+    # robot.hard_reset()
 
     # robot.move(0, 0 ,10)  # 1号点
     # time.sleep(5)

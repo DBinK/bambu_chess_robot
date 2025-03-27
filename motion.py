@@ -11,7 +11,7 @@ class BambuMotion:
         self.position_y = 128
         self.position_z = 10
 
-        self.MOTOR_SPEED = 18000  # 默认速度
+        self.MOTOR_SPEED = 5000  # 默认速度 18000
 
         self.PX_LIMIT = [0, 280]
         self.PY_LIMIT = [0, 256]

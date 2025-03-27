@@ -10,8 +10,8 @@ from robot import BambuRobot
 cam = USBCamera()
 cam.start_loop_thread()  # 启动摄像头线程
 
-bot = BambuRobot()
-bot.hard_reset()
+bot = BambuRobot(reset=False)
+# bot.hard_reset()  # 第一次上电一定要重置位置
 bot.show_chess_board()  # 展示棋盘
 
 while not cam.cam_thread.is_alive() and len(cam.center_points) < 4:
@@ -30,17 +30,26 @@ class ChessBot:
         self.update_board()     # 第一次启动更新棋盘状态
 
     def update_board(self):   # 更新棋盘状态
+        time.sleep(2)  # 等待棋盘稳定
         self.center_points      = cam.get_center_points()
         self.borad_chess_colors = cam.get_borad_chess_colors()
+        logger.info(f"更新棋盘状态")
+        logger.info(f"棋盘格中心点: {self.center_points}")
+        logger.info(f"棋盘格颜色: {self.borad_chess_colors}")
 
     def update_chess_coords(self):  # 更新背景棋子位置
+        time.sleep(2)  # 等待棋盘稳定
         self.black_coords = cam.get_black_coords()
         self.white_coords = cam.get_white_coords()
+        logger.info("更新背景棋子位置")
+        logger.info(f"黑色棋子数量: {len(self.black_coords)}, 位置: {self.black_coords}")
+        logger.info(f"白色棋子数量: {len(self.white_coords)}, 位置: {self.white_coords}")
 
     def to_printer_coord(self, img_coord):
-        printer_coord = []
-        printer_coord[0] = img_coord[0] / 10 * 2
-        printer_coord[1] = img_coord[1] / 10 * 2
+        printer_coord = [0, 0]
+        logger.info(f"转换坐标: {img_coord}")
+        printer_coord[0] = int(img_coord[0] / 10 * 2)
+        printer_coord[1] = 251 - int(img_coord[1] / 10 * 2) - 60  # 翻转y轴
         return printer_coord
 
     def pick_and_place(self, chess_color, grid_number):  # 抓取棋子并放置
@@ -50,18 +59,25 @@ class ChessBot:
         logger.warning(f"正在拾取 {color_str[chess_color]} 棋，放置到 {grid_number} 号方格。")
 
         if chess_color == self.BLACK:
-            from_x = self.to_printer_coord(self.white_coords[0][0])
-            from_y = self.to_printer_coord(self.white_coords[0][1])
-        elif chess_color == self.WHITE:
-            from_x = self.to_printer_coord(self.black_coords[0][0])
-            from_y = self.to_printer_coord(self.black_coords[0][1])
+            if len(self.white_coords) < 1:
+                logger.error("没有找到白色棋子的位置信息。")
+                return
+            from_x, from_y = self.to_printer_coord(self.white_coords[0])
 
-        to_x = self.to_printer_coord(self.center_points[grid_number-1][0])
-        to_y = self.to_printer_coord(self.center_points[grid_number-1][1])
+        elif chess_color == self.WHITE:
+            if len(self.black_coords) < 1:
+                logger.error("没有找到黑色棋子的位置信息。")
+                return
+            from_x, from_y = self.to_printer_coord(self.black_coords[0])
+
+        if len(self.center_points) < 9:
+            logger.error(f"棋盘上没有 {grid_number} 号方格的位置信息。")
+            return
+
+        to_x, to_y = self.to_printer_coord(self.center_points[grid_number-1])
 
         logger.info(f"正在将 {color_str[chess_color]} 棋从 {from_x} , {from_y} 移动到 {to_x} , {to_y}")
         bot.move_piece(from_x, from_y, to_x, to_y)  # 放置棋子
-        
         
     def mode_1(self):
         logger.info("进入模式 1: 装置将任意 1 颗黑棋子放置到 5 号方格中。\n")
@@ -99,7 +115,7 @@ class ChessBot:
                 logger.error("无效输入，请重新输入。")
                 continue
 
-            grid_number = input("请输入棋子要放置的位置: ")
+            grid_number = int(input("请输入棋子要放置的位置: "))
             self.pick_and_place(chess_color, grid_number)
 
             placed_chess += 1  # 成功放置棋子后增加计数
