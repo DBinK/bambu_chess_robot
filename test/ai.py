@@ -186,3 +186,22 @@ if __name__ == "__main__":
     # 获取先手设置
     first_move = int(input("请输入先手设置(0=人类先手，1-9=AI先手并在对应位置下子): "))
     game.play(first_move)
+
+"""
+# 在其他文件中引用
+from tictactoe import TicTacToeAI
+
+# 创建AI实例
+ai = TicTacToeAI(player1=-1, player2=1, empty=0)
+
+# 获取AI决策
+board = [
+    [-1, 0, 1],
+    [0, 1, 0],
+    [0, 0, -1]
+]
+best_move = ai.find_best_move(board, player=1)  # 返回(row, col)
+
+# 检查胜利
+is_win = ai.check_win(board, player=-1)
+"""
