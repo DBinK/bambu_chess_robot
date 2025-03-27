@@ -1,5 +1,7 @@
 import os
 import time
+import threading
+
 import cv2
 
 import tags
@@ -66,7 +68,7 @@ class USBCamera:
         self.white_coords = []
 
         # print('启动USB相机图像捕捉循环')
-        # self.cam_thread = threading.Thread(target=self.loop)
+        self.cam_thread = threading.Thread(target=self.loop)
         # self.cam_thread.start()
 
     def set_camera_parameters(self):
@@ -158,7 +160,44 @@ class USBCamera:
         print("结束了 loop 线程")
 
     def destroy(self):
-        self.cap.release()  # 释放摄像头资源
+        print("结束摄像头线程")
+
+        if self.cam_thread.is_alive():
+            self.cam_thread.join()
+
+        if self.cap.isOpened():
+            self.cap.release()  # 释放摄像头资源
+
+
+    def start_loop_thread(self):  # 启动循环线程
+        self.cam_thread.start()
+
+    def get_center_points(self):
+        if self.cam_thread.is_alive():
+            return self.center_points
+        else:
+            print("摄像头线程已结束, 无法获取棋盘坐标数据")
+            return None
+    def get_borad_chess_colors(self):
+        if self.cam_thread.is_alive():
+            return self.borad_chess_colors
+        else:
+            print("摄像头线程已结束, 无法获取棋盘状态数据")
+            return None
+
+    def get_black_coords(self):
+        if self.cam_thread.is_alive():
+            return self.black_coords
+        else:
+            print("摄像头线程已结束, 无法获取黑棋位置数据")
+            return None  
+
+    def get_white_coords(self):
+        if self.cam_thread.is_alive():
+            return self.white_coords
+        else:
+            print("摄像头线程已结束, 无法获取白旗位置数据")
+            return None
 
 
 if __name__ == '__main__':
