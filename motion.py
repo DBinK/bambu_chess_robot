@@ -75,7 +75,7 @@ class BambuMotion:
         speed = self.MOTOR_SPEED if speed is None else speed  # 设置速度
 
         self.send_gcode("G90 ; 设置为绝对坐标")
-        self.send_gcode(f"G X{px} Y{py} Z{pz} F{speed}")
+        self.send_gcode(f"G1 X{px} Y{py} Z{pz} F{speed}")
         self.send_gcode("M400 ; 等待 所有命令执行完毕")
 
         if delay == 0:

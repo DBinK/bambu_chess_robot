@@ -195,6 +195,8 @@ class ChessBot:
 
     def run(self):
         while True:
+            self.pump_off()  # 关闭气泵
+            bot.show_chess_board()  # 展示棋盘  
             print("\n--------------------------------------")
             print("选择模式：")
             print("1: 模式 1 - 放置 1 颗黑棋到 5 号方格")
