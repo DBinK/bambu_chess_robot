@@ -7,11 +7,11 @@ from config import hostname, access_code, serial
 class BambuMotion:
     def __init__(self, reset=True):
         self.bambu_client = BambuClient(hostname, access_code, serial)
-        self.position_x = 273  # 默认位置
+        self.position_x = 0  # 默认位置
         self.position_y = 220
         self.position_z = 40
 
-        self.MOTOR_SPEED = 15000  # 默认速度 18000
+        self.MOTOR_SPEED = 12000  # 默认速度 18000
 
         self.PX_LIMIT = [0, 280]
         self.PY_LIMIT = [0, 256]
@@ -75,7 +75,7 @@ class BambuMotion:
         speed = self.MOTOR_SPEED if speed is None else speed  # 设置速度
 
         self.send_gcode("G90 ; 设置为绝对坐标")
-        self.send_gcode(f"G0 X{px} Y{py} Z{pz} F{speed}")
+        self.send_gcode(f"G X{px} Y{py} Z{pz} F{speed}")
         self.send_gcode("M400 ; 等待 所有命令执行完毕")
 
         if delay == 0:
@@ -101,7 +101,7 @@ class BambuMotion:
         speed = self.MOTOR_SPEED if speed is None else speed  # 设置速度
 
         self.send_gcode("G91 ; 设置为相对坐标")
-        self.send_gcode(f"G0 X{dx} Y{dy} Z{dz} F{speed}")
+        self.send_gcode(f"G1 X{dx} Y{dy} Z{dz} F{speed}")
         self.send_gcode("M400 ; 等待所有命令执行完毕")
         self.send_gcode("G90 ; 设置回绝对坐标")
 

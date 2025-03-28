@@ -15,7 +15,7 @@ cam.start_loop_thread()  # 启动摄像头线程
 
 bot = BambuRobot(reset=False)
 
-reset = input("是否硬重置位置, 1是, 0否:")
+reset = input("是否硬重置位置, 第一次上电一定要重置位置, 1是, 0否:")
 
 if reset == '1':
     bot.hard_reset()  # 第一次上电一定要重置位置
@@ -36,7 +36,7 @@ class ChessBot:
         self.borad_chess_colors = []
         self.black_coords = []
         self.white_coords = []
-        self.update_board()     # 第一次启动更新棋盘状态
+        self.update_board()     # 第一次启动更新self
 
     def update_board(self):   # 更新棋盘状态
         time.sleep(2)  # 等待棋盘稳定
@@ -57,8 +57,8 @@ class ChessBot:
     def to_printer_coord(self, img_coord):
         printer_coord = [0, 0]
         logger.info(f"转换坐标: {img_coord}")
-        printer_coord[0] = int(img_coord[0] / 10 * 2)
-        printer_coord[1] = 251 - int(img_coord[1] / 10 * 2) - 60  # 翻转y轴
+        printer_coord[0] = int(img_coord[0] / 10 * 2) + 10
+        printer_coord[1] = 251 - int(img_coord[1] / 10 * 2) - 60 + 45 # 翻转y轴
         return printer_coord
 
     def pump_on(self):   # 启动拾取气泵
@@ -66,7 +66,7 @@ class ChessBot:
         time.sleep(1)
 
     def pump_off(self):  # 关闭拾取气泵
-        subprocess.run(['gpio', 'write', '3', '0'])
+        subprocess.run(['gpio', 'write', '3', '1'])
         time.sleep(1)
 
     def pick_and_place(self, chess_color, grid_number):  # 抓取棋子并放置
@@ -96,12 +96,17 @@ class ChessBot:
         to_x, to_y = self.to_printer_coord(self.center_points[grid_number-1])
 
         logger.info(f"正在将 {color_str[chess_color]} 棋从 {from_x} , {from_y} 移动到 {to_x} , {to_y}")
-        bot.move_piece(from_x, from_y, to_x, to_y)  # 放置棋子
         
+        bot.capture_piece(from_x, from_y)  # 放置棋子
+        bot.release_piece(to_x, to_y)
+
         self.pump_off()
 
+        bot.show_chess_board()
+        
+
     def mode_1(self):
-        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
+        # bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
         
         logger.info("进入模式 1: 装置将任意 1 颗黑棋子放置到 5 号方格中。\n")
 
@@ -118,7 +123,8 @@ class ChessBot:
        
 
     def mode_2(self):
-
+        
+        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
    
         logger.info("进入模式 2: 将任意 2 颗黑棋子和 2 颗白棋子依次放置到指定方格中。")
 
@@ -136,9 +142,9 @@ class ChessBot:
             chess_color = input(f"请输入要放置的棋子颜色 (+号白色, -号黑色): \n")
 
             if chess_color == self.BLACK:
-                logger.info("放置白色棋子")
+                logger.info("放置黑色棋子")
             elif chess_color == self.WHITE:
-                logger.info("放置黑色棋子") 
+                logger.info("放置白色棋子") 
             else:
                 logger.error("无效输入，请重新输入。")
                 continue
@@ -152,8 +158,6 @@ class ChessBot:
     
 
     def mode_3(self):
-        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
-        
         bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
         
         logger.info("进入模式 3: 人机对弈。")
