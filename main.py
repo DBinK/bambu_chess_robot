@@ -1,18 +1,27 @@
 import time
 import threading
+import subprocess
 
-from cv2 import log
 from loguru import logger
 
 from camera import USBCamera
 from robot import BambuRobot
 
+# 运行一个命令并等待其完成
+result = subprocess.run(['gpio', 'mode', '3', 'out'])
+
 cam = USBCamera()
 cam.start_loop_thread()  # 启动摄像头线程
 
 bot = BambuRobot(reset=False)
-# bot.hard_reset()  # 第一次上电一定要重置位置
-bot.show_chess_board()  # 展示棋盘
+
+reset = input("是否硬重置位置, 1是, 0否:")
+
+if reset == '1':
+    bot.hard_reset()  # 第一次上电一定要重置位置
+    bot.show_chess_board()  # 展示棋盘
+else:
+    bot.show_chess_board()  # 展示棋盘
 
 while not cam.cam_thread.is_alive() and len(cam.center_points) < 4:
     print("等待摄像头线程启动中...")
@@ -52,7 +61,17 @@ class ChessBot:
         printer_coord[1] = 251 - int(img_coord[1] / 10 * 2) - 60  # 翻转y轴
         return printer_coord
 
+    def pump_on(self):   # 启动拾取气泵
+        subprocess.run(['gpio', 'write', '3', '0'])
+        time.sleep(1)
+
+    def pump_off(self):  # 关闭拾取气泵
+        subprocess.run(['gpio', 'write', '3', '0'])
+        time.sleep(1)
+
     def pick_and_place(self, chess_color, grid_number):  # 抓取棋子并放置
+
+        self.pump_on()
 
         color_str = {self.BLACK: "黑色", self.WHITE: "白色" }
 
@@ -79,6 +98,8 @@ class ChessBot:
         logger.info(f"正在将 {color_str[chess_color]} 棋从 {from_x} , {from_y} 移动到 {to_x} , {to_y}")
         bot.move_piece(from_x, from_y, to_x, to_y)  # 放置棋子
         
+        self.pump_off()
+
     def mode_1(self):
         bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
         
@@ -98,6 +119,7 @@ class ChessBot:
 
     def mode_2(self):
 
+   
         logger.info("进入模式 2: 将任意 2 颗黑棋子和 2 颗白棋子依次放置到指定方格中。")
 
         bot.show_chess_board()  # 展示棋盘
@@ -106,7 +128,8 @@ class ChessBot:
 
         while placed_chess < 4:
             bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
-            
+            bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
+             
             self.update_chess_coords()  # 更新背景棋子位置
 
             logger.info(f"\n正在放置第 {placed_chess + 1} 颗棋子:")
@@ -129,6 +152,8 @@ class ChessBot:
     
 
     def mode_3(self):
+        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
+        
         bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
         
         logger.info("进入模式 3: 人机对弈。")
