@@ -4,5 +4,5 @@
 
 演示视频: 【基于 拓竹A1 的24电赛 E题 设计方案】https://www.bilibili.com/video/BV1HTdkYeEWz
 
-- `vision.py` 标定背景底板检测
+- `tags.py` 标记背景底板检测
 - `chess.py` 棋盘棋子检测
