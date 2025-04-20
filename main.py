@@ -6,6 +6,7 @@ from loguru import logger
 
 from camera import USBCamera
 from robot import BambuRobot
+from ai import TicTacToeAI
 
 # 运行一个命令并等待其完成
 result = subprocess.run(['gpio', 'mode', '3', 'out'])
@@ -44,7 +45,11 @@ class ChessBot:
         self.borad_chess_colors = cam.get_borad_chess_colors()
         logger.info(f"更新棋盘状态")
         logger.info(f"棋盘格中心点: {self.center_points}")
-        logger.info(f"棋盘格颜色: {self.borad_chess_colors}")
+        logger.info(f"棋盘格颜色分布: {self.borad_chess_colors}")
+
+        if not self.center_points:
+            logger.error("没有找到棋盘的位置信息")
+            return False
 
     def update_chess_coords(self):  # 更新背景棋子位置
         time.sleep(2)  # 等待棋盘稳定
@@ -53,6 +58,10 @@ class ChessBot:
         logger.info("更新背景棋子位置")
         logger.info(f"黑色棋子数量: {len(self.black_coords)}, 位置: {self.black_coords}")
         logger.info(f"白色棋子数量: {len(self.white_coords)}, 位置: {self.white_coords}")
+        
+        if len(self.black_coords) < 1 or len(self.white_coords) < 1:
+            logger.error("没有找到棋子的位置信息。")
+            return False
 
     def to_printer_coord(self, img_coord):
         printer_coord = [0, 0]
@@ -134,7 +143,6 @@ class ChessBot:
 
         while placed_chess < 4:
             bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
-            bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
              
             self.update_chess_coords()  # 更新背景棋子位置
 
@@ -163,36 +171,41 @@ class ChessBot:
         logger.info("进入模式 3: 人机对弈。")
         logger.info("\n若人先放置黑棋, 输入数字0回车, 人先手; \n输入1~9数字后回车, 机器执黑棋先手")
 
-        init_board = False
-
-        while not init_board:
-            
+        while True:
             grid_number = input("请输入数字: ")
 
             if grid_number == '0':
-                logger.info("人先手")
+                logger.info("人先手执黑棋 (-1)")
+                human_color = self.BLACK
                 bot_color = self.WHITE
-                init_board = True
+                break
 
             elif grid_number in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                logger.info("机器先手")
+                logger.info("机器先手, 人执白棋 (1)")
                 self.pick_and_place(self.WHITE, grid_number)
                 bot_color = self.BLACK
-                init_board = True
-                
+                human_color = self.WHITE
+                break
+
             else:
                 logger.error("输入错误，请重新输入")
                 continue
         
+        ttt_ai = TicTacToeAI(bot_color, human_color, 0)
         logger.info("游戏正式开始")
 
-        self.calculate_next_move()
+        while True:
+            done = input("人执完棋后, 请输入数字 0 继续")
+            if done == '0':
+                self.update_board()
+                self.update_chess_coords()
+                best_pos = ttt_ai.find_best_move(self.borad_chess_colors, bot_color)
+                self.pick_and_place(bot_color, best_pos)
+            else:
+                logger.error("输入错误，请重新输入")
+                continue
 
-
-    def calculate_next_move(self):
-        # 这里是计算装置下一步棋的逻辑
-        logger.info("计算装置需要落子的位置...")
-
+ 
     def run(self):
         while True:
             self.pump_off()  # 关闭气泵
