@@ -49,7 +49,7 @@ class ChessBot:
             for i in range(0, 9, 3):
                 print("|", end=' ')
                 for j in range(3):
-                    print(board[i+j] if board[i+j] != self.empty else '.', end=' | ')
+                    print(board[i+j] if board[i+j] != 0 else '.', end=' | ')
                 print("\n-------------")
 
         time.sleep(2)  # 等待棋盘稳定
@@ -171,8 +171,10 @@ class ChessBot:
                 continue
 
             placed_chess += 1  # 成功放置棋子后增加计数
+            self.update_board()
         
         logger.info("题目2 任务要求完成")
+
     
 
     def mode_3(self):
@@ -211,6 +213,7 @@ class ChessBot:
             done = input("人执完棋后, 请输入数字 0 继续")
             if done == '0':
                 if self.last_board_chess_colors != self.board_chess_colors:
+                    pass
                 self.update_board()
                 self.update_chess_coords()
                 best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)

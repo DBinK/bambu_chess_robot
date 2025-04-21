@@ -1,10 +1,8 @@
 import time
 import math
-from bambu_connect import BambuClient  # pip install bambu-connect --index https://pypi.org/simple/
 import subprocess
 
-from bambu_connect import BambuClient
-
+from bambu_connect import BambuClient  # pip install bambu-connect --index https://pypi.org/simple/
 from config import hostname, access_code, serial
 
 
