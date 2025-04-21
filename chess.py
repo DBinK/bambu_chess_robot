@@ -5,8 +5,12 @@ from colors import GREEN_LOWER, GREEN_UPPER, YELLOW_LOWER, YELLOW_UPPER
 
 
 def remove_background(img, lower, upper):
+
+    img_blur = cv2.GaussianBlur(img, (15, 15), 0)
+    cv2.namedWindow('img_blur', cv2.WINDOW_NORMAL)
+    cv2.imshow('img_blur', img_blur)
     
-    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)  # 转换为HSV格式
+    hsv_img = cv2.cvtColor(img_blur, cv2.COLOR_BGR2HSV)  # 转换为HSV格式
 
     lower_color = np.array(lower)  # 颜色范围下限
     upper_color = np.array(upper)  # 颜色颜色上限

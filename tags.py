@@ -17,8 +17,8 @@ at_detector = Detector(
 def pre_process(img):
     # 预处理
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 将图像转换为灰度图像
-    # img = cv2.GaussianBlur(img, (7, 7), 0)  # 应用高斯滤波以平滑图像
-    _, img_bin = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)  # 二值化
+    img_blur = cv2.GaussianBlur(img_gray, (3, 3), 0)  # 应用高斯滤波以平滑图像
+    _, img_bin = cv2.threshold(img_blur, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)  # 二值化
 
     return img_bin
 
@@ -82,7 +82,8 @@ def tags_to_quad_vertices(detections):
 
     # 确保每个需要的 id 都存在
     tag_ids = [detection.tag_id for detection in detections]
-    required_ids = [9, 19, 14, 4]
+    # required_ids = [4, 9, 19, 14]  # 需要的 id
+    required_ids = [24, 26, 21, 29]  # 需要的 id
 
     if len(tag_ids) < 4 or not all(tag_id in tag_ids for tag_id in required_ids):
         # print(f"Apriltag 标记不全, 无法继续进行识别, 识别到: {tag_ids}")
@@ -93,17 +94,13 @@ def tags_to_quad_vertices(detections):
 
         detection.corners = sort_corners(detection.corners) # 对角点坐标排序
 
-        if detection.tag_id == 4:                 
-            # x1, y1 = detection.center.tolist()
+        if detection.tag_id == 24:                 
             x1, y1 = detection.corners[0].tolist()  # 左上
-        elif detection.tag_id == 9:               
-            # x2, y2 = detection.center.tolist()
+        elif detection.tag_id == 26:               
             x2, y2 = detection.corners[1].tolist()  # 右上
-        elif detection.tag_id == 19:            
-            # x3, y3 = detection.center.tolist()
+        elif detection.tag_id == 21:            
             x3, y3 = detection.corners[2].tolist()  # 右下
-        elif detection.tag_id == 14:            
-            # x4, y4 = detection.center.tolist()
+        elif detection.tag_id == 29:            
             x4, y4 = detection.corners[3].tolist()  # 左下
 
     quad_vertices = [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
@@ -184,13 +181,13 @@ def draw_tags(img, detections):
             )  # 绿色线条
 
         # 在中心绘制标签 ID
-        center = int(detection.center[0]), int(detection.center[1])
+        center = int(detection.center[0]-15), int(detection.center[1]+12)
         cv2.putText(
             img_draw,
             f"{detection.tag_id}",
             center,
             cv2.FONT_HERSHEY_SIMPLEX,
-            2.0,
+            0.8,
             (0, 0, 222),
             2,
         )  # 红色文本
