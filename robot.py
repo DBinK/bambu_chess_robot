@@ -28,7 +28,7 @@ class BambuRobot(BambuMotion):
         self.move_z(self.CHESS_Z)                  # 下降 
 
         print("用气泵 拾取棋子")
-        self.notice_finish()  
+        # self.notice_finish()  
         # time.sleep(2)                              # 等待吸起棋子
 
         self.move_z(self.STANDBY_Z)                # 抬起 
@@ -41,7 +41,7 @@ class BambuRobot(BambuMotion):
         # self.move_z(self.CHESS_Z)              # 下降 
         self.move_z(self.CHESS_Z + 4)            # 下降 
         self.pump_off()                          # 气泵打开 
-        self.notice_finish()                    # 用气泵 释放棋子
+        # self.notice_finish()                    # 用气泵 释放棋子
 
         print("用气泵 释放棋子")
         time.sleep(0.2)                         # 等待放下棋子
@@ -51,7 +51,7 @@ class BambuRobot(BambuMotion):
 
     def show_chess_board(self):
         print("展示棋盘")
-        self.move_z(self.STANDBY_Z)               # 抬起
+        # self.move_z(self.STANDBY_Z)               # 抬起
         self.move(250, 260, self.STANDBY_Z, 15000)  # 移动到待机处
         print("待机并展示棋盘 \n")
 

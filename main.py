@@ -38,8 +38,8 @@ class ChessBot:
         self.last_board_chess_colors = []
         self.black_coords = []
         self.white_coords = []
-        self.PX_OFFSET = 0
-        self.PY_OFFSET = 40
+        self.PX_OFFSET = -3
+        self.PY_OFFSET = 43
         self.update_board()     # 第一次启动更新self
     
 
