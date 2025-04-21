@@ -149,9 +149,10 @@ class ChessBot:
             bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
              
             self.update_chess_coords()  # 更新背景棋子位置
+            self.update_board()
 
             logger.info(f"\n正在放置第 {placed_chess + 1} 颗棋子:")
-            chess_color = input(f"请输入要放置的棋子颜色 (1白色, -1黑色): \n")
+            chess_color = int(input(f"请输入要放置的棋子颜色 (1白色, -1黑色): \n"))
 
             if chess_color == self.BLACK:
                 logger.info("放置黑色棋子")
@@ -171,7 +172,6 @@ class ChessBot:
                 continue
 
             placed_chess += 1  # 成功放置棋子后增加计数
-            self.update_board()
         
         logger.info("题目2 任务要求完成")
 
@@ -211,12 +211,22 @@ class ChessBot:
         while True:
             done = input("人执完棋后, 请输入数字 0 继续\n")
             if done == '0':
-                if self.last_board_chess_colors != self.board_chess_colors:
-                    pass
                 self.update_board()
                 self.update_chess_coords()
+
+                if self.last_board_chess_colors != self.board_chess_colors:
+                    pass  # 若被篡改, 做处理
+
                 best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)
-                self.pick_and_place(bot_color, best_pos-1)  # -1 是因为python的数组索引从0开始
+                self.pick_and_place(bot_color, best_pos+1)  # 是因为python的数组索引从0开始
+                
+                is_win = ttt_ai.check_game_over(self.board_chess_colors)
+                if is_win:
+                    if is_win == 99:
+                        logger.info("游戏结束, 双方 平局") 
+                    else:
+                        logger.info(f"游戏结束, 获胜方为: {is_win}")
+                    break
             else:
                 logger.error("输入错误，请重新输入")
                 continue

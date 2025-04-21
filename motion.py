@@ -13,13 +13,13 @@ class BambuMotion:
         self.position_y = 260
         self.position_z = 15
 
-        self.MOTOR_SPEED = 12000  # 默认速度 18000
+        self.MOTOR_SPEED = 11000  # 默认速度 18000
 
         self.PX_LIMIT = [0, 280]
         self.PY_LIMIT = [0, 260]
         self.PZ_LIMIT = [0, 200]
 
-        self.EXTRA_DELAY = 0.5
+        self.EXTRA_DELAY = 0.75
 
         if reset:
             self.hard_reset()
@@ -79,12 +79,12 @@ class BambuMotion:
         speed = self.MOTOR_SPEED if speed is None else speed  # 设置速度
 
         self.send_gcode("G90 ; 设置为绝对坐标")
-        self.send_gcode(f"G1 X{px} Y{py} Z{pz} F{speed}")
+        self.send_gcode(f"G0 X{px} Y{py} Z{pz} F{speed}")
         self.send_gcode("M400 ; 等待 所有命令执行完毕")
 
         if delay == 0:
             delay = (distance / (speed/60)) + self.EXTRA_DELAY  # 计算需要等待的时间 + 额外延时
-            print(f"等待 {delay} s")
+            # print(f"等待 {delay} s")
             time.sleep(delay)
         else:
             time.sleep(delay)  # 手动暂停等待
@@ -105,7 +105,7 @@ class BambuMotion:
         speed = self.MOTOR_SPEED if speed is None else speed  # 设置速度
 
         self.send_gcode("G91 ; 设置为相对坐标")
-        self.send_gcode(f"G1 X{dx} Y{dy} Z{dz} F{speed}")
+        self.send_gcode(f"G0 X{dx} Y{dy} Z{dz} F{speed}")
         self.send_gcode("M400 ; 等待所有命令执行完毕")
         self.send_gcode("G90 ; 设置回绝对坐标")
 
@@ -113,7 +113,7 @@ class BambuMotion:
 
         if delay == 0:
             delay = (distance / (speed/60)) + self.EXTRA_DELAY  # 计算需要等待的时间 + 额外延时
-            print(f"等待 {delay} s")
+            # print(f"等待 {delay} s")
             time.sleep(delay)
         else:
             time.sleep(delay)

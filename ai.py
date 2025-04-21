@@ -85,8 +85,8 @@ class TicTacToeAI:
             elif score == max_score:
                 best_pos = random.choice([best_pos, pos])
         
-        print(f"AI选择位置: {best_pos + 1}")
-        
+        print(f"AI选择位置: {best_pos}")
+
         return best_pos
     
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     
     best_move = ai.find_best_move(board, 1)  # 返回0-8的索引
 
-    print(f"AI选择位置: {best_move + 1}")
+    print(f"AI 选择位置: {best_move + 1}")
 
 """
 

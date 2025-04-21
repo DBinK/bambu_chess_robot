@@ -21,7 +21,7 @@ camera_params = {
     'gain': 100,
     'auto_wb': 0,
     'wb_temperature': 5000,
-    'contrast': 20,
+    'contrast': 42,
 }
 
 
@@ -95,6 +95,10 @@ class USBCamera:
         while not self.cap.isOpened():
             cnt += 1
             print(f"摄像头打开失败，请检查摄像头是否正常连接！{cnt}")
+            
+            self.cap = cv2.VideoCapture(self.camera_id)
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # 设置缓冲区大小为 1, 只读取最新一帧
+
             time.sleep(0.5)
             continue
 
