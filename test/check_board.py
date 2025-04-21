@@ -1,6 +1,6 @@
 
 prev = [1, 1, 0, 1]
-current = [1, 0, 1, 1]
+current = [1, 1, -1, 1]
 ls = []
 
 for i in range(len(prev)):
@@ -13,6 +13,6 @@ for i in range(len(prev)):
 print(ls)
 
 if sum(ls) == 0:
-    print("没有棋子被篡改")
+    print("没有增加棋子, 检查是否有篡改")
 else:
     print("有棋子被篡改")
