@@ -34,20 +34,33 @@ class ChessBot:
         self.BLACK = "-"
         self.WHITE = "+"
         self.center_points = []
-        self.borad_chess_colors = []
+        self.board_chess_colors = []
+        self.last_board_chess_colors = []
         self.black_coords = []
         self.white_coords = []
         self.update_board()     # 第一次启动更新self
+    
 
-    def update_board(self):   # 更新棋盘状态
+    def update_board(self):   # 更新棋盘状态    
+        def print_board(board):
+            print("-------------")
+            for i in range(0, 9, 3):
+                print("|", end=' ')
+                for j in range(3):
+                    print(board[i+j] if board[i+j] != self.empty else '.', end=' | ')
+                print("\n-------------")
+
         time.sleep(2)  # 等待棋盘稳定
         self.center_points      = cam.get_center_points()
-        self.borad_chess_colors = cam.get_borad_chess_colors()
+        self.board_chess_colors = cam.get_board_chess_colors()
         logger.info(f"更新棋盘状态")
-        logger.info(f"棋盘格中心点: {self.center_points}")
-        logger.info(f"棋盘格颜色分布: {self.borad_chess_colors}")
 
-        if not self.center_points:
+        if self.center_points:
+            logger.info(f"棋盘格中心点: {self.center_points}")
+            logger.info(f"棋盘格颜色分布: {self.board_chess_colors}")
+            print_board(self.board_chess_colors)
+            return self.center_points
+        else:
             logger.error("没有找到棋盘的位置信息")
             return False
 
@@ -178,6 +191,7 @@ class ChessBot:
                 logger.info("人先手执黑棋 (-1)")
                 human_color = self.BLACK
                 bot_color = self.WHITE
+                self.last_board_chess_colors = self.update_board() # 初始化上一次的棋盘
                 break
 
             elif grid_number in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
@@ -185,25 +199,30 @@ class ChessBot:
                 self.pick_and_place(self.WHITE, grid_number)
                 bot_color = self.BLACK
                 human_color = self.WHITE
+                self.last_board_chess_colors = [0] * 9  # 初始化上一次的棋盘, 纠错用
                 break
 
             else:
                 logger.error("输入错误，请重新输入")
                 continue
-        
+
+       
         ttt_ai = TicTacToeAI(bot_color, human_color, 0)
         logger.info("游戏正式开始")
 
         while True:
             done = input("人执完棋后, 请输入数字 0 继续")
             if done == '0':
+                if self.last_board_chess_colors != self.board_chess_colors:
                 self.update_board()
                 self.update_chess_coords()
-                best_pos = ttt_ai.find_best_move(self.borad_chess_colors, bot_color)
+                best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)
                 self.pick_and_place(bot_color, best_pos)
             else:
                 logger.error("输入错误，请重新输入")
                 continue
+
+            
 
  
     def run(self):

@@ -166,7 +166,7 @@ def sort_corners(corners):
     return corners
 
 
-def detect_borad_corners(img):
+def detect_board_corners(img):
     """ 从背景识别棋盘角点 """
     
     # blurred_img = cv2.GaussianBlur(img, (7, 7), 0)
@@ -275,10 +275,10 @@ def get_point_color(img, center_point, radius):
 
     return average_color
 
-def classify_borad_chess_color(img, center_points):
+def classify_board_chess_color(img, center_points):
     """ 获取棋盘格上棋子的颜色 """
 
-    borad_chess_colors = []
+    board_chess_colors = []
 
     for point in center_points:
         color = get_point_color(img, point, 20)
@@ -299,15 +299,15 @@ def classify_borad_chess_color(img, center_points):
         else:                                                       # 无棋子
             color = 0
 
-        borad_chess_colors.append(color)
+        board_chess_colors.append(color)
         # print(f"棋子: {center_points.index(point)+1}, 颜色: {color}")
 
-    # print("棋盘格颜色:", borad_chess_colors)
+    # print("棋盘格颜色:", board_chess_colors)
 
-    return borad_chess_colors
+    return board_chess_colors
 
 
-def draw_chess_borad(img, corners, center_points, chess_colors):
+def draw_chess_board(img, corners, center_points, chess_colors):
     """ 绘制棋盘格调试信息 """
     
     draw_img = img.copy()
@@ -338,17 +338,17 @@ def draw_chess_borad(img, corners, center_points, chess_colors):
     return draw_img
 
 
-def chess_borad_detect(img, debug=False):
+def chess_board_detect(img, debug=False):
     """ 棋盘格识别总函数 """
 
-    corners = detect_borad_corners(img)  # 获取棋盘格角点
+    corners = detect_board_corners(img)  # 获取棋盘格角点
 
     if len(corners) == 0:
         # print("没有检测到棋盘")
         
         if debug:  # 调试模式
-            cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
-            cv2.imshow('img_borad', img)  # 绘制空白图像
+            cv2.namedWindow('img_board', cv2.WINDOW_NORMAL)
+            cv2.imshow('img_board', img)  # 绘制空白图像
 
         return [], [], []
     
@@ -359,14 +359,14 @@ def chess_borad_detect(img, debug=False):
         return [], [], []
 
     center_points = get_center_points(H_inv)  # 获取棋盘格中心点
-    borad_chess_colors = classify_borad_chess_color(img, center_points)
+    board_chess_colors = classify_board_chess_color(img, center_points)
 
     if debug:  # 调试模式
-        draw_img = draw_chess_borad(img, corners, center_points, borad_chess_colors)
-        cv2.namedWindow('img_borad', cv2.WINDOW_NORMAL)
-        cv2.imshow('img_borad', draw_img)
+        draw_img = draw_chess_board(img, corners, center_points, board_chess_colors)
+        cv2.namedWindow('img_board', cv2.WINDOW_NORMAL)
+        cv2.imshow('img_board', draw_img)
 
-    return corners, center_points, borad_chess_colors
+    return corners, center_points, board_chess_colors
 
 
 if __name__ == '__main__':
@@ -380,7 +380,7 @@ if __name__ == '__main__':
     cv2.namedWindow('img_raw', cv2.WINDOW_NORMAL)
     cv2.imshow('img_raw', img_raw)
     
-    center_points, chess_colors = chess_borad_detect(img_raw, True)
+    center_points, chess_colors = chess_board_detect(img_raw, True)
 
     black_coords, white_coords, black_contours, white_contours = chess_detect(img_raw, True)
 

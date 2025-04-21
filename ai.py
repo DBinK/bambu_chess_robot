@@ -86,6 +86,8 @@ class TicTacToeAI:
                 best_pos = random.choice([best_pos, pos])
 
         return best_pos
+    
+
 
 
 class TicTacToeGame:

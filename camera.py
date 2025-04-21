@@ -62,7 +62,7 @@ class USBCamera:
         self.set_camera_parameters() # 设置相机参数
 
         # 注册需要暴露的数据
-        self.borad_chess_colors = []
+        self.board_chess_colors = []
         self.center_points = []
         self.black_coords = []
         self.white_coords = []
@@ -120,11 +120,11 @@ class USBCamera:
 
             if img_trans is not None:
 
-                corners, self.center_points, self.borad_chess_colors = chess.chess_borad_detect(img_trans)            # 获取棋盘格信息
+                corners, self.center_points, self.board_chess_colors = chess.chess_board_detect(img_trans)            # 获取棋盘格信息
                 self.black_coords, self.white_coords, black_contours, white_contours = chess.chess_detect(img_trans)  # 获取棋子位置
 
                 if corners is not None:  # 画出棋盘格
-                    img_chess = chess.draw_chess_borad(img_trans, corners, self.center_points, self.borad_chess_colors)
+                    img_chess = chess.draw_chess_board(img_trans, corners, self.center_points, self.board_chess_colors)
                     img_chess = chess.draw_chess(img_chess, black_contours, (255, 100, 0))
                     img_chess = chess.draw_chess(img_chess, white_contours, (0, 100, 255))
 
@@ -178,9 +178,9 @@ class USBCamera:
         else:
             print("摄像头线程已结束, 无法获取棋盘坐标数据")
             return None
-    def get_borad_chess_colors(self):
+    def get_board_chess_colors(self):
         if self.cam_thread.is_alive():
-            return self.borad_chess_colors
+            return self.board_chess_colors
         else:
             print("摄像头线程已结束, 无法获取棋盘状态数据")
             return None
