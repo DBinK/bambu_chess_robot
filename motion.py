@@ -1,26 +1,32 @@
 import time
 import math
 from bambu_connect import BambuClient  # pip install bambu-connect --index https://pypi.org/simple/
+import subprocess
+
+from bambu_connect import BambuClient
 
 from config import hostname, access_code, serial
+
 
 class BambuMotion:
     def __init__(self, reset=True):
         self.bambu_client = BambuClient(hostname, access_code, serial)
-        self.position_x = 0  # 默认位置
-        self.position_y = 220
+        self.position_x = 250  # 默认位置
+        self.position_y = 260
         self.position_z = 40
 
         self.MOTOR_SPEED = 12000  # 默认速度 18000
 
         self.PX_LIMIT = [0, 280]
-        self.PY_LIMIT = [0, 256]
+        self.PY_LIMIT = [0, 260]
         self.PZ_LIMIT = [0, 200]
 
         self.EXTRA_DELAY = 0.5
 
         if reset:
             self.hard_reset()
+        
+        subprocess.run(['gpio', 'mode', '3', 'out'])  # 打开气泵控制GPIO
 
     def send_gcode(self, gcode_command):
         self.bambu_client.send_gcode(gcode_command)
@@ -141,6 +147,14 @@ class BambuMotion:
             M1006 W
                    """)
         time.sleep(2)
+
+    def pump_on(self):   # 启动拾取气泵
+        subprocess.run(['gpio', 'write', '3', '0'])
+        time.sleep(1)
+
+    def pump_off(self):  # 关闭拾取气泵
+        subprocess.run(['gpio', 'write', '3', '1'])
+        time.sleep(1)
 
 
 if __name__ == "__main__":

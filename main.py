@@ -38,6 +38,8 @@ class ChessBot:
         self.last_board_chess_colors = []
         self.black_coords = []
         self.white_coords = []
+        self.PX_OFFSET = 0
+        self.PY_OFFSET = 40
         self.update_board()     # 第一次启动更新self
     
 
@@ -79,21 +81,11 @@ class ChessBot:
     def to_printer_coord(self, img_coord):
         printer_coord = [0, 0]
         logger.info(f"转换坐标: {img_coord}")
-        printer_coord[0] = int(img_coord[0] / 10 * 2) + 10
-        printer_coord[1] = 251 - int(img_coord[1] / 10 * 2) - 60 + 45 # 翻转y轴
+        printer_coord[0] = int(img_coord[0] / 10 * 2) + 10 + self.PX_OFFSET
+        printer_coord[1] = 251 - int(img_coord[1] / 10 * 2) - 60 + self.PY_OFFSET # 翻转y轴
         return printer_coord
-
-    def pump_on(self):   # 启动拾取气泵
-        subprocess.run(['gpio', 'write', '3', '0'])
-        time.sleep(1)
-
-    def pump_off(self):  # 关闭拾取气泵
-        subprocess.run(['gpio', 'write', '3', '1'])
-        time.sleep(1)
-
+    
     def pick_and_place(self, chess_color, grid_number):  # 抓取棋子并放置
-
-        self.pump_on()
 
         color_str = {self.BLACK: "黑色", self.WHITE: "白色" }
 
@@ -102,18 +94,18 @@ class ChessBot:
         if chess_color == self.BLACK:
             if len(self.black_coords) < 1:
                 logger.error("没有找到黑色棋子的位置信息。")
-                return
+                return False
             from_x, from_y = self.to_printer_coord(self.black_coords[0])
 
         elif chess_color == self.WHITE:
             if len(self.white_coords) < 1:
                 logger.error("没有找到白色棋子的位置信息。")
-                return
+                return False
             from_x, from_y = self.to_printer_coord(self.white_coords[0])
 
         if len(self.center_points) < 9:
             logger.error(f"棋盘上没有 {grid_number} 号方格的位置信息。")
-            return
+            return False
 
         to_x, to_y = self.to_printer_coord(self.center_points[grid_number-1])
 
@@ -122,10 +114,9 @@ class ChessBot:
         bot.capture_piece(from_x, from_y)  # 放置棋子
         bot.release_piece(to_x, to_y)
 
-        self.pump_off()
-
         bot.show_chess_board()
-        
+
+        return True
 
     def mode_1(self):
         # bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
@@ -171,7 +162,13 @@ class ChessBot:
                 continue
 
             grid_number = int(input("请输入棋子要放置的位置: "))
-            self.pick_and_place(chess_color, grid_number)
+
+            ret = self.pick_and_place(chess_color, grid_number)
+
+            if not ret:
+                logger.error("放置棋子失败，请重新尝试。")
+                self.update_chess_coords()  # 更新背景棋子位置
+                continue
 
             placed_chess += 1  # 成功放置棋子后增加计数
         
@@ -227,7 +224,6 @@ class ChessBot:
  
     def run(self):
         while True:
-            self.pump_off()  # 关闭气泵
             bot.show_chess_board()  # 展示棋盘  
             print("\n--------------------------------------")
             print("选择模式：")
