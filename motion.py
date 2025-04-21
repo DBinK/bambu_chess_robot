@@ -11,7 +11,7 @@ class BambuMotion:
         self.bambu_client = BambuClient(hostname, access_code, serial)
         self.position_x = 250  # 默认位置
         self.position_y = 260
-        self.position_z = 40
+        self.position_z = 15
 
         self.MOTOR_SPEED = 12000  # 默认速度 18000
 

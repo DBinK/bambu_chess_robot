@@ -84,7 +84,9 @@ class TicTacToeAI:
                 best_pos = pos
             elif score == max_score:
                 best_pos = random.choice([best_pos, pos])
-
+        
+        print(f"AI选择位置: {best_pos + 1}")
+        
         return best_pos
     
 
@@ -159,9 +161,19 @@ class TicTacToeGame:
 
 
 if __name__ == "__main__":
-    game = TicTacToeGame(player1=-1, player2=1, empty=0)
-    first_move = int(input("请输入先手设置(0=人类先手，1-9=AI先手并在对应位置下子): "))
-    game.play(first_move)
+    # game = TicTacToeGame(player1=-1, player2=1, empty=0)
+    # first_move = int(input("请输入先手设置(0=人类先手，1-9=AI先手并在对应位置下子): "))
+    # game.play(first_move)
+    
+    ai = TicTacToeAI()
+
+    board = [0, 0, 0, 
+             1, -1, 0, 
+             0, 0, -1]
+    
+    best_move = ai.find_best_move(board, 1)  # 返回0-8的索引
+
+    print(f"AI选择位置: {best_move + 1}")
 
 """
 

@@ -4,7 +4,7 @@ from motion import BambuMotion
 class BambuRobot(BambuMotion):
     def __init__(self, reset=True):
         super().__init__(reset=reset)
-        self.STANDBY_Z = 10   # 待机高度
+        self.STANDBY_Z = 15   # 待机高度
         self.CHESS_Z = 2     # 棋子高度
         self.Z_SPEED = 48000  # Z轴速度
 
@@ -45,7 +45,7 @@ class BambuRobot(BambuMotion):
 
         print("用气泵 释放棋子")
         time.sleep(0.2)                         # 等待放下棋子
-        # self.move_z(self.STANDBY_Z)             # 抬起
+        self.move_z(self.STANDBY_Z)             # 抬起
 
         print(f"释放棋子到 ({to_x}, {to_y}) \n")
 

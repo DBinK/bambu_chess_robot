@@ -31,8 +31,8 @@ while not cam.cam_thread.is_alive() and len(cam.center_points) < 4:
 class ChessBot:
     def __init__(self):
         self.state = 'mode_1'   # 初始模式为模式 1
-        self.BLACK = "-"
-        self.WHITE = "+"
+        self.BLACK = -1
+        self.WHITE = 1
         self.center_points = []
         self.board_chess_colors = []
         self.last_board_chess_colors = []
@@ -87,6 +87,8 @@ class ChessBot:
     
     def pick_and_place(self, chess_color, grid_number):  # 抓取棋子并放置
 
+        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
+
         color_str = {self.BLACK: "黑色", self.WHITE: "白色" }
 
         logger.warning(f"正在拾取 {color_str[chess_color]} 棋，放置到 {grid_number} 号方格。")
@@ -119,7 +121,6 @@ class ChessBot:
         return True
 
     def mode_1(self):
-        # bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
         
         logger.info("进入模式 1: 装置将任意 1 颗黑棋子放置到 5 号方格中。\n")
 
@@ -136,7 +137,6 @@ class ChessBot:
        
 
     def mode_2(self):
-        
         bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
    
         logger.info("进入模式 2: 将任意 2 颗黑棋子和 2 颗白棋子依次放置到指定方格中。")
@@ -151,7 +151,7 @@ class ChessBot:
             self.update_chess_coords()  # 更新背景棋子位置
 
             logger.info(f"\n正在放置第 {placed_chess + 1} 颗棋子:")
-            chess_color = input(f"请输入要放置的棋子颜色 (+号白色, -号黑色): \n")
+            chess_color = input(f"请输入要放置的棋子颜色 (1白色, -1黑色): \n")
 
             if chess_color == self.BLACK:
                 logger.info("放置黑色棋子")
@@ -178,27 +178,26 @@ class ChessBot:
     
 
     def mode_3(self):
-        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
-        
-        logger.info("进入模式 3: 人机对弈。")
-        logger.info("\n若人先放置黑棋, 输入数字0回车, 人先手; \n输入1~9数字后回车, 机器执黑棋先手")
-
         while True:
+            self.update_chess_coords()        
+            logger.info("进入模式 3: 人机对弈。")
+            logger.info("\n若人先放置黑棋, 输入数字0回车, 人先手; \n输入1~9数字后回车, 机器执黑棋先手")
+
             grid_number = input("请输入数字: ")
 
             if grid_number == '0':
                 logger.info("人先手执黑棋 (-1)")
-                human_color = self.BLACK
-                bot_color = self.WHITE
+                human_color = -1
+                bot_color   = 1
                 self.last_board_chess_colors = self.update_board() # 初始化上一次的棋盘
                 break
 
             elif grid_number in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
                 logger.info("机器先手, 人执白棋 (1)")
-                self.pick_and_place(self.WHITE, grid_number)
-                bot_color = self.BLACK
-                human_color = self.WHITE
-                self.last_board_chess_colors = [0] * 9  # 初始化上一次的棋盘, 纠错用
+                bot_color   = -1
+                human_color = 1
+                self.pick_and_place(bot_color, int(grid_number))
+                self.last_board_chess_colors = self.update_board() # 初始化上一次的棋盘
                 break
 
             else:
@@ -210,14 +209,14 @@ class ChessBot:
         logger.info("游戏正式开始")
 
         while True:
-            done = input("人执完棋后, 请输入数字 0 继续")
+            done = input("人执完棋后, 请输入数字 0 继续\n")
             if done == '0':
                 if self.last_board_chess_colors != self.board_chess_colors:
                     pass
                 self.update_board()
                 self.update_chess_coords()
                 best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)
-                self.pick_and_place(bot_color, best_pos)
+                self.pick_and_place(bot_color, best_pos-1)  # -1 是因为python的数组索引从0开始
             else:
                 logger.error("输入错误，请重新输入")
                 continue
