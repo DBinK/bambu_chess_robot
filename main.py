@@ -232,7 +232,7 @@ class ChessBot:
                 
                 # 机器人计算最佳落点并下棋
                 best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)
-                self.pick_and_place(bot_color, best_pos+1)  # 是因为python的数组索引从0开始
+                self.pick_and_place(bot_color, best_pos+1)  # +1 是因为python的数组索引从0开始
                 
                 # 检查游戏是否结束
                 is_win = ttt_ai.check_game_over(self.board_chess_colors)
