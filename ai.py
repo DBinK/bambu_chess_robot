@@ -90,18 +90,27 @@ class TicTacToeAI:
         return best_pos
     
     def find_changes(self, board_before, board_after):
-        # 检查输入是否合法
-        if len(board_before) != 9 or len(board_after) != 9:
-            raise ValueError("输入列表长度必须为9")
-        
         changes = []  # 存储变化信息
-        
-        # 遍历每个位置
-        for i in range(9):
+        for i in range(9):  # 遍历每个位置
             if board_before[i] != board_after[i]:
                 changes.append((i, board_before[i], board_after[i]))
         
         return changes
+    
+    def find_board_fix(self, changes):
+        fix_changes = [0, 0]
+
+        if len(changes) == 2:
+            for pos in changes:
+                if pos[2] == 1:    # 找到棋子被移动后的位置
+                    fix_changes[0] = pos[0]
+                elif pos[2] == 0:  # 找到棋子被移动前的位置
+                    fix_changes[1] = pos[0]
+            print(f"需要修正的变化：{fix_changes}")
+            return fix_changes     
+        
+        print(f"棋盘变化数不为2, 无法/无需修正: {changes}")
+        return None
 
 
 class TicTacToeGame:

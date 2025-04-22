@@ -209,22 +209,32 @@ class ChessBot:
         logger.info("游戏正式开始")
 
         while True:
-            done = input("人执完棋后, 请输入数字 0 继续\n")
+            done = input("人执完棋后, 请输入数字 0 继续: \n")
             if done == '0':
+                # 更新棋盘
                 self.update_board()
                 self.update_chess_pos()
 
+                # 检查棋子变化
                 changes_list = ttt_ai.find_changes(self.last_board_chess_colors, self.board_chess_colors)
-                if len(changes_list) == 0:
-                    logger.info("没有棋子变化, 请重新放置棋子")
-                    continue
-                elif len(changes_list) == 1:
-                    # logger.error("棋子变化超过1个, 请重新放置棋子")
-                    continue
+                fix_changes = ttt_ai.find_board_fix(changes_list)
 
+                if fix_changes is not None:  # 如果需要修复, 进行修复
+                    from_x, from_y = self.to_printer_coord(self.center_points[fix_changes[0]])
+                    to_x, to_y     = self.to_printer_coord(self.center_points[fix_changes[1]])
+                    
+                    bot.capture_piece(from_x, from_y)  # 放置棋子
+                    bot.release_piece(to_x, to_y)
+
+                    bot.show_chess_board()
+                    logger.info("修复完成, 继续游戏")
+                    continue
+                
+                # 机器人计算最佳落点并下棋
                 best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)
                 self.pick_and_place(bot_color, best_pos+1)  # 是因为python的数组索引从0开始
                 
+                # 检查游戏是否结束
                 is_win = ttt_ai.check_game_over(self.board_chess_colors)
                 if is_win:
                     if is_win == 99:
