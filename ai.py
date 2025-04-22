@@ -89,7 +89,19 @@ class TicTacToeAI:
 
         return best_pos
     
-
+    def find_changes(self, board_before, board_after):
+        # 检查输入是否合法
+        if len(board_before) != 9 or len(board_after) != 9:
+            raise ValueError("输入列表长度必须为9")
+        
+        changes = []  # 存储变化信息
+        
+        # 遍历每个位置
+        for i in range(9):
+            if board_before[i] != board_after[i]:
+                changes.append((i, board_before[i], board_after[i]))
+        
+        return changes
 
 
 class TicTacToeGame:

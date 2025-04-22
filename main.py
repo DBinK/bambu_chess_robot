@@ -66,7 +66,7 @@ class ChessBot:
             logger.error("没有找到棋盘的位置信息")
             return False
 
-    def update_chess_coords(self):  # 更新背景棋子位置
+    def update_chess_pos(self):  # 更新背景棋子位置
         time.sleep(2)  # 等待棋盘稳定
         self.black_coords = cam.get_black_coords()
         self.white_coords = cam.get_white_coords()
@@ -126,7 +126,7 @@ class ChessBot:
 
         bot.show_chess_board()  # 展示棋盘
 
-        self.update_chess_coords()  # 更新背景棋子位置
+        self.update_chess_pos()  # 更新背景棋子位置
         self.update_board()
 
         self.pick_and_place(chess_color=self.BLACK, grid_number=5) # 放置棋子 5 号方格
@@ -148,7 +148,7 @@ class ChessBot:
         while placed_chess < 4:
             bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
              
-            self.update_chess_coords()  # 更新背景棋子位置
+            self.update_chess_pos()  # 更新背景棋子位置
             self.update_board()
 
             logger.info(f"\n正在放置第 {placed_chess + 1} 颗棋子:")
@@ -168,7 +168,7 @@ class ChessBot:
 
             if not ret:
                 logger.error("放置棋子失败，请重新尝试。")
-                self.update_chess_coords()  # 更新背景棋子位置
+                self.update_chess_pos()  # 更新背景棋子位置
                 continue
 
             placed_chess += 1  # 成功放置棋子后增加计数
@@ -179,7 +179,7 @@ class ChessBot:
 
     def mode_3(self):
         while True:
-            self.update_chess_coords()        
+            self.update_chess_pos()        
             logger.info("进入模式 3: 人机对弈。")
             logger.info("\n若人先放置黑棋, 输入数字0回车, 人先手; \n输入1~9数字后回车, 机器执黑棋先手")
 
@@ -212,10 +212,15 @@ class ChessBot:
             done = input("人执完棋后, 请输入数字 0 继续\n")
             if done == '0':
                 self.update_board()
-                self.update_chess_coords()
+                self.update_chess_pos()
 
-                if self.last_board_chess_colors != self.board_chess_colors:
-                    pass  # 若被篡改, 做处理
+                changes_list = ttt_ai.find_changes(self.last_board_chess_colors, self.board_chess_colors)
+                if len(changes_list) == 0:
+                    logger.info("没有棋子变化, 请重新放置棋子")
+                    continue
+                elif len(changes_list) == 1:
+                    # logger.error("棋子变化超过1个, 请重新放置棋子")
+                    continue
 
                 best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)
                 self.pick_and_place(bot_color, best_pos+1)  # 是因为python的数组索引从0开始

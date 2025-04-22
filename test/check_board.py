@@ -1,36 +1,28 @@
+def find_changes(state_before, state_after):
+    # 检查输入是否合法
+    if len(state_before) != 9 or len(state_after) != 9:
+        raise ValueError("输入列表长度必须为9")
+    
+    changes = []  # 存储变化信息
+    
+    # 遍历每个位置
+    for i in range(9):
+        if state_before[i] != state_after[i]:
+            changes.append((i, state_before[i], state_after[i]))
+    
+    return changes
 
-# prev = [1, 1, 0, 1]
-# current = [1, 1, -1, 1]
+# 示例输入
+state_before =  [1, 0, 0, 
+                1, -1, 0, 
+                0, 0, 1]
 
-import numpy as np
+state_after =  [1, 0, 0, 
+                1, -1, 0, 
+                0, 0, 1]
 
-# 初始棋盘状态列表
-prev = [1, 1, 0, 1]
-current = [1, 0, 1, 1]
+# 调用函数
+result = find_changes(state_before, state_after)
 
-# 将列表转换为numpy数组
-prev_array = np.array(prev)
-current_array = np.array(current)
-
-# 矩阵减法
-board_changes = current_array + prev_array
-
-# 打印结果
-print("prev_array:", prev_array)
-print("current_array:", current_array)
-print("board_changes:", board_changes)
-
-# 检查棋子是否增加
-if sum(current_array - prev_array) == 0:
-    print("棋子数量无变化了, 检查棋子位置是否有篡改")
-else:
-    print("棋子数量或颜色变化了")
-
-prev_pos = board_changes - prev_array
-current_pos = board_changes - current_array
-
-p = np.where(prev_pos == 0)[0]
-c = np.where(current_pos == 0)[0]
-
-print("prev_pos:", p)
-print("current_pos:", c)
+# 输出结果
+print("变化的棋子：", result)
