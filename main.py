@@ -59,7 +59,7 @@ class ChessBot:
         logger.info(f"更新棋盘状态")
 
         if self.center_points:
-            logger.info(f"棋盘格中心点: {self.center_points}")
+            # logger.info(f"棋盘格中心点: {self.center_points}")
             logger.info(f"棋盘格颜色分布: {self.board_chess_colors}")
             print_board(self.board_chess_colors)
             return self.center_points, self.board_chess_colors
@@ -72,8 +72,8 @@ class ChessBot:
         self.black_coords = cam.get_black_coords()
         self.white_coords = cam.get_white_coords()
         logger.info("更新背景棋子位置")
-        logger.info(f"黑色棋子数量: {len(self.black_coords)}, 位置: {self.black_coords}")
-        logger.info(f"白色棋子数量: {len(self.white_coords)}, 位置: {self.white_coords}")
+        logger.info(f"黑色棋子数量: {len(self.black_coords)}") #, 位置: {self.black_coords}")
+        logger.info(f"白色棋子数量: {len(self.white_coords)}") #, 位置: {self.white_coords}")
         
         if len(self.black_coords) < 1 or len(self.white_coords) < 1:
             logger.error("没有找到棋子的位置信息。")
@@ -81,7 +81,7 @@ class ChessBot:
 
     def to_printer_coord(self, img_coord):
         printer_coord = [0, 0]
-        logger.info(f"转换坐标: {img_coord}")
+        # logger.info(f"转换坐标: {img_coord}")
         printer_coord[0] = int(img_coord[0] / 10 * 2) + 0 + self.PX_OFFSET
         printer_coord[1] = 251 - int(img_coord[1] / 10 * 2) - 60 + self.PY_OFFSET # 翻转y轴
         return printer_coord
@@ -190,17 +190,28 @@ class ChessBot:
                 logger.info("人先手执黑棋 (-1)")
                 human_color = -1
                 bot_color   = 1
-                self.last_board_chess_colors = self.update_board()[1] # 初始化上一次的棋盘
-                break
+
+                if len(self.board_chess_colors) != 9:
+                    logger.error("棋盘上没有棋子信息。")
+                    continue
+                else:
+                    self.update_board()
+                    self.last_board_chess_colors = self.board_chess_colors # 初始化上一次的棋盘
+                    break
 
             elif grid_number in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
                 logger.info("机器先手, 人执白棋 (1)")
                 bot_color   = -1
                 human_color = 1
                 self.pick_and_place(bot_color, int(grid_number))
-                self.last_board_chess_colors = self.update_board()[1] # 初始化上一次的棋盘
-                break
-
+                
+                if len(self.board_chess_colors) != 9:
+                    logger.error("棋盘上没有棋子信息。")
+                    continue
+                else:
+                    self.update_board()
+                    self.last_board_chess_colors = self.board_chess_colors # 初始化上一次的棋盘
+                    break
             else:
                 logger.error("输入错误，请重新输入")
                 continue
@@ -210,11 +221,25 @@ class ChessBot:
         logger.info("游戏正式开始")
 
         while True:
+
+            # 检查游戏是否结束
+            is_win = ttt_ai.check_game_over(self.board_chess_colors)
+            if is_win:
+                if is_win == 99:
+                    logger.info("游戏结束, 双方 平局") 
+                    bot.notice_finish()
+                else:
+                    logger.info(f"游戏结束, 获胜方为: {is_win}")
+                    bot.notice_finish()
+                break
+
             done = input("人执完棋后, 请输入数字 0 继续: ")
+
             if done == '0':
                 # 更新棋盘
                 self.update_board()
                 self.update_chess_pos()
+
 
                 # 检查棋子变化
                 print(f"last_board_chess_colors: {self.last_board_chess_colors}, board_chess_colors: {self.board_chess_colors}")
@@ -235,20 +260,11 @@ class ChessBot:
                 
                 # 机器人计算最佳落点并下棋
                 best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)
-                self.pick_and_place(bot_color, best_pos+1)  # +1 是因为python的数组索引从0开始
+                self.pick_and_place(bot_color, best_pos+1)  # +1 是因为 pick_and_place 输入从1开始的棋盘序号
                 
-
-                # 检查游戏是否结束
-                is_win = ttt_ai.check_game_over(self.board_chess_colors)
-                if is_win:
-                    if is_win == 99:
-                        logger.info("游戏结束, 双方 平局") 
-                    else:
-                        logger.info(f"游戏结束, 获胜方为: {is_win}")
-                    break
-
                 # 更新上一次的棋盘
-                self.last_board_chess_colors = self.update_board()[1]
+                self.update_board()
+                self.last_board_chess_colors = self.board_chess_colors
 
             else:
                 logger.error("输入错误，请重新输入")

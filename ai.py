@@ -87,12 +87,18 @@ class TicTacToeAI:
     
     def find_board_changes(self, board_before, board_after):
         """ 寻找棋子变化 """
+        if len(board_before) != len(board_after):
+            print("棋盘状态不一致，无法比较。")
+            return []
+        
         changes = []  # 存储变化信息
         
         for i in range(9):  # 遍历每个位置
             if board_before[i] != board_after[i]:
                 changes.append((i, board_before[i], board_after[i]))
-        
+
+        print("棋子变化:", changes)
+
         return changes
     
     def find_board_fix(self, changes):
@@ -100,7 +106,7 @@ class TicTacToeAI:
 
         if len(changes) == 2:
             for pos in changes:
-                if pos[2] == 1:    # 找到棋子被移动后的位置
+                if pos[1] == 0:    # 找到棋子被移动后的位置
                     fix_changes[0] = pos[0]
                 elif pos[2] == 0:  # 找到棋子被移动前的位置
                     fix_changes[1] = pos[0]
