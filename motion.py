@@ -89,7 +89,7 @@ class BambuMotion:
         else:
             time.sleep(delay)  # 手动暂停等待
 
-        print(f"已移动到 ({self.position_x}, {self.position_y}, {self.position_z})")
+        # print(f"已移动到 ({self.position_x}, {self.position_y}, {self.position_z})")
         return True
 
     def move_relative(self, dx, dy, dz, speed=None, delay=0):
@@ -109,7 +109,7 @@ class BambuMotion:
         self.send_gcode("M400 ; 等待所有命令执行完毕")
         self.send_gcode("G90 ; 设置回绝对坐标")
 
-        print(f"已移动到 ({self.position_x}, {self.position_y}, {self.position_z})")
+        # print(f"已移动到 ({self.position_x}, {self.position_y}, {self.position_z})")
 
         if delay == 0:
             delay = (distance / (speed/60)) + self.EXTRA_DELAY  # 计算需要等待的时间 + 额外延时

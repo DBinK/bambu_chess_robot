@@ -10,6 +10,7 @@ from ai import TicTacToeAI
 
 # 运行一个命令并等待其完成
 result = subprocess.run(['gpio', 'mode', '3', 'out'])
+result = subprocess.run(['gpio', 'write', '3', '1'])
 
 cam = USBCamera()
 cam.start_loop_thread()  # 启动摄像头线程
@@ -147,12 +148,12 @@ class ChessBot:
 
         while placed_chess < 4:
             bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
+
+            logger.info(f"\n正在放置第 {placed_chess + 1} 颗棋子:")
+            chess_color = int(input(f"请输入要放置的棋子颜色 (1白色, -1黑色): "))
              
             self.update_chess_pos()  # 更新背景棋子位置
             self.update_board()
-
-            logger.info(f"\n正在放置第 {placed_chess + 1} 颗棋子:")
-            chess_color = int(input(f"请输入要放置的棋子颜色 (1白色, -1黑色): \n"))
 
             if chess_color == self.BLACK:
                 logger.info("放置黑色棋子")
@@ -209,7 +210,7 @@ class ChessBot:
         logger.info("游戏正式开始")
 
         while True:
-            done = input("人执完棋后, 请输入数字 0 继续: \n")
+            done = input("人执完棋后, 请输入数字 0 继续: ")
             if done == '0':
                 # 更新棋盘
                 self.update_board()
