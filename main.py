@@ -179,6 +179,8 @@ class ChessBot:
     
 
     def mode_3(self):
+        bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
+
         while True:
             self.update_chess_pos()        
             logger.info("进入模式 3: 人机对弈。")
@@ -221,7 +223,6 @@ class ChessBot:
         logger.info("游戏正式开始")
 
         while True:
-
             # 检查游戏是否结束
             is_win = ttt_ai.check_game_over(self.board_chess_colors)
             if is_win:
@@ -234,6 +235,8 @@ class ChessBot:
                 break
 
             done = input("人执完棋后, 请输入数字 0 继续: ")
+            
+            bot = BambuRobot(reset=False)    # 重新初始化机器人, 以防掉线
 
             if done == '0':
                 # 更新棋盘
@@ -246,7 +249,6 @@ class ChessBot:
                 fix_changes = ttt_ai.find_board_fix(changes_list)
 
                 if fix_changes is not None:  # 如果需要修复, 进行修复
-                    bot.notice_finish()
                     from_x, from_y = self.to_printer_coord(self.center_points[fix_changes[0]])
                     to_x, to_y     = self.to_printer_coord(self.center_points[fix_changes[1]])
                     

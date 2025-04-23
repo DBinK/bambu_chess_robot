@@ -21,6 +21,10 @@ class TicTacToeAI:
 
     def check_game_over(self, board):
         """ 检查游戏是否结束 """
+        if len(board) != 9:
+            print("棋盘状态不正确，请检查视觉识别输入。")
+            return False
+         
         for player in self.players:
             if self.check_win(board, player):
                 return player  # 返回获胜玩家 ID
