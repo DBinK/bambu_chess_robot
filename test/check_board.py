@@ -29,7 +29,7 @@ state_after =  [1, 0, 0,
 changes = find_board_changes(state_before, state_after)
 
 # 输出结果
-print("变化的棋子：", result)
+print("变化的棋子：", changes)
 
 def find_board_fix(changes):
 
@@ -51,4 +51,4 @@ def find_board_fix(changes):
     return None
 
 
-find_board_fix(result)
+find_board_fix(changes)

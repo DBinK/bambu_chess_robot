@@ -61,7 +61,7 @@ class ChessBot:
             logger.info(f"棋盘格中心点: {self.center_points}")
             logger.info(f"棋盘格颜色分布: {self.board_chess_colors}")
             print_board(self.board_chess_colors)
-            return self.center_points
+            return self.center_points, self.board_chess_colors
         else:
             logger.error("没有找到棋盘的位置信息")
             return False
@@ -81,7 +81,7 @@ class ChessBot:
     def to_printer_coord(self, img_coord):
         printer_coord = [0, 0]
         logger.info(f"转换坐标: {img_coord}")
-        printer_coord[0] = int(img_coord[0] / 10 * 2) + 10 + self.PX_OFFSET
+        printer_coord[0] = int(img_coord[0] / 10 * 2) + 0 + self.PX_OFFSET
         printer_coord[1] = 251 - int(img_coord[1] / 10 * 2) - 60 + self.PY_OFFSET # 翻转y轴
         return printer_coord
     
@@ -189,7 +189,7 @@ class ChessBot:
                 logger.info("人先手执黑棋 (-1)")
                 human_color = -1
                 bot_color   = 1
-                self.last_board_chess_colors = self.update_board() # 初始化上一次的棋盘
+                self.last_board_chess_colors = self.update_board()[1] # 初始化上一次的棋盘
                 break
 
             elif grid_number in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
@@ -197,7 +197,7 @@ class ChessBot:
                 bot_color   = -1
                 human_color = 1
                 self.pick_and_place(bot_color, int(grid_number))
-                self.last_board_chess_colors = self.update_board() # 初始化上一次的棋盘
+                self.last_board_chess_colors = self.update_board()[1] # 初始化上一次的棋盘
                 break
 
             else:
@@ -216,10 +216,12 @@ class ChessBot:
                 self.update_chess_pos()
 
                 # 检查棋子变化
+                print(f"last_board_chess_colors: {self.last_board_chess_colors}, board_chess_colors: {self.board_chess_colors}")
                 changes_list = ttt_ai.find_board_changes(self.last_board_chess_colors, self.board_chess_colors)
                 fix_changes = ttt_ai.find_board_fix(changes_list)
 
                 if fix_changes is not None:  # 如果需要修复, 进行修复
+                    bot.notice_finish()
                     from_x, from_y = self.to_printer_coord(self.center_points[fix_changes[0]])
                     to_x, to_y     = self.to_printer_coord(self.center_points[fix_changes[1]])
                     
@@ -234,6 +236,7 @@ class ChessBot:
                 best_pos = ttt_ai.find_best_move(self.board_chess_colors, bot_color)
                 self.pick_and_place(bot_color, best_pos+1)  # +1 是因为python的数组索引从0开始
                 
+
                 # 检查游戏是否结束
                 is_win = ttt_ai.check_game_over(self.board_chess_colors)
                 if is_win:
@@ -242,6 +245,10 @@ class ChessBot:
                     else:
                         logger.info(f"游戏结束, 获胜方为: {is_win}")
                     break
+
+                # 更新上一次的棋盘
+                self.last_board_chess_colors = self.update_board()[1]
+
             else:
                 logger.error("输入错误，请重新输入")
                 continue
