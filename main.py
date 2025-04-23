@@ -294,6 +294,7 @@ class ChessBot:
                 self.mode_3()
             elif choice == 'q':
                 logger.info("退出程序。")
+                cam.destroy()
                 break
             else:
                 logger.error("无效选择，请重新输入。")
