@@ -20,13 +20,7 @@ class TicTacToeAI:
         return False
 
     def check_game_over(self, board):
-        """
-        检查游戏是否结束
-        返回值:
-        - False: 游戏未结束
-        - -1 / 1: 某玩家获胜
-        - 99: 平局
-        """
+        """ 检查游戏是否结束 """
         for player in self.players:
             if self.check_win(board, player):
                 return player  # 返回获胜玩家 ID
@@ -37,6 +31,7 @@ class TicTacToeAI:
         return False   # 未结束返回False
 
     def evaluate_move(self, board, pos, player):
+        """ 评估当前状态下的每个位置的分数 """
         temp_board = board.copy()
         temp_board[pos] = player
         score = 0
@@ -70,6 +65,7 @@ class TicTacToeAI:
         return score
 
     def find_best_move(self, board, current_player):
+        """ AI寻找最佳落子位置 """
         empty = self.get_empty_positions(board)
         if not empty:
             return None
@@ -89,8 +85,10 @@ class TicTacToeAI:
 
         return best_pos
     
-    def find_changes(self, board_before, board_after):
+    def find_board_changes(self, board_before, board_after):
+        """ 寻找棋子变化 """
         changes = []  # 存储变化信息
+        
         for i in range(9):  # 遍历每个位置
             if board_before[i] != board_after[i]:
                 changes.append((i, board_before[i], board_after[i]))
@@ -111,6 +109,10 @@ class TicTacToeAI:
         
         print(f"棋盘变化数不为2, 无法/无需修正: {changes}")
         return None
+
+
+
+
 
 
 class TicTacToeGame:

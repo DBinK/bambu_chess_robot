@@ -216,7 +216,7 @@ class ChessBot:
                 self.update_chess_pos()
 
                 # 检查棋子变化
-                changes_list = ttt_ai.find_changes(self.last_board_chess_colors, self.board_chess_colors)
+                changes_list = ttt_ai.find_board_changes(self.last_board_chess_colors, self.board_chess_colors)
                 fix_changes = ttt_ai.find_board_fix(changes_list)
 
                 if fix_changes is not None:  # 如果需要修复, 进行修复

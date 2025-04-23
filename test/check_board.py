@@ -1,4 +1,8 @@
-def find_changes(state_before, state_after):
+import re
+from numpy import fix
+
+
+def find_board_changes(state_before, state_after):
     # 检查输入是否合法
     if len(state_before) != 9 or len(state_after) != 9:
         raise ValueError("输入列表长度必须为9")
@@ -22,7 +26,7 @@ state_after =  [1, 0, 0,
                 1, 1, 0]
 
 # 调用函数
-result = find_changes(state_before, state_after)
+changes = find_board_changes(state_before, state_after)
 
 # 输出结果
 print("变化的棋子：", result)
