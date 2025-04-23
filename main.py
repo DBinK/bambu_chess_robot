@@ -240,7 +240,6 @@ class ChessBot:
                 self.update_board()
                 self.update_chess_pos()
 
-
                 # 检查棋子变化
                 print(f"last_board_chess_colors: {self.last_board_chess_colors}, board_chess_colors: {self.board_chess_colors}")
                 changes_list = ttt_ai.find_board_changes(self.last_board_chess_colors, self.board_chess_colors)
@@ -263,8 +262,10 @@ class ChessBot:
                 self.pick_and_place(bot_color, best_pos+1)  # +1 是因为 pick_and_place 输入从1开始的棋盘序号
                 
                 # 更新上一次的棋盘
+                print(f"回合结束, 更新 last_board_chess_colors: {self.last_board_chess_colors}")
                 self.update_board()
                 self.last_board_chess_colors = self.board_chess_colors
+                # self.last_board_chess_colors[best_pos] = bot_color
 
             else:
                 logger.error("输入错误，请重新输入")
