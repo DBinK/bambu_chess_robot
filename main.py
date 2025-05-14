@@ -39,8 +39,8 @@ class ChessBot:
         self.last_board_chess_colors = []
         self.black_coords = []
         self.white_coords = []
-        self.PX_OFFSET = -3
-        self.PY_OFFSET = 43
+        self.PX_OFFSET = 5     # 输入正数落点右移
+        self.PY_OFFSET = 43     # 输入正数落点下移
         self.update_board()     # 第一次启动更新self
     
 

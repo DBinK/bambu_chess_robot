@@ -10,7 +10,8 @@ import chess
 
 # 摄像头参数
 camera_params = {
-    'camera_id': 0,
+    'camera_id': "/dev/video-4k",
+    # 'camera_id': 0,
     # 'image_width': 1920,
     # 'image_height': 1080,
     'image_width': 1280,
